@@ -1,0 +1,527 @@
+Create a new complete Telegram Bot API service implementation using Effect-TS that covers ALL official Telegram Bot API methods.
+Do not use any existing code on my project.
+Do not use Schema.Struct.
+
+## CONTEXT7 INTEGRATION:
+Use these Context7 references for accurate type definitions and patterns:
+- **Effect-TS**: https://context7.com/effect-ts/effect
+- **JSDoc**: https://context7.com/jsdoc/jsdoc.github.io
+- **Telegram Bot API**: https://context7.com/tdlib/telegram-bot-api
+
+## Requirements:
+
+**Framework & Dependencies:**
+- Use ONLY Effect-TS ecosystem modules (Effect, Context, etc.)
+- NO third-party packages or external types
+- Pure Effect-TS implementation
+
+**Code Standards:**
+- Full JSDoc documentation for all functions, types, interfaces, and methods
+- Proper error handling with custom error types
+- Context-based service management
+- Tagged Class for service definition
+
+**COMPLETE API COVERAGE - Implement ALL Telegram Bot API Methods with Full JSDoc documentation:**
+
+### Getting updates
+- Update
+- getUpdates
+- setWebhook
+- deleteWebhook
+- getWebhookInfo
+- WebhookInfo
+
+### Available types
+- User
+- Chat
+- ChatFullInfo
+- Message
+- MessageId
+- InaccessibleMessage
+- MaybeInaccessibleMessage
+- MessageEntity
+- TextQuote
+- ExternalReplyInfo
+- ReplyParameters
+- MessageOrigin
+- MessageOriginUser
+- MessageOriginHiddenUser
+- MessageOriginChat
+- MessageOriginChannel
+- PhotoSize
+- Animation
+- Audio
+- Document
+- Story
+- Video
+- VideoNote
+- Voice
+- PaidMediaInfo
+- PaidMedia
+- PaidMediaPreview
+- PaidMediaPhoto
+- PaidMediaVideo
+- Contact
+- Dice
+- PollOption
+- InputPollOption
+- PollAnswer
+- Poll
+- ChecklistTask
+- Checklist
+- InputChecklistTask
+- InputChecklist
+- ChecklistTasksDone
+- ChecklistTasksAdded
+- Location
+- Venue
+- WebAppData
+- ProximityAlertTriggered
+- MessageAutoDeleteTimerChanged
+- ChatBoostAdded
+- BackgroundFill
+- BackgroundFillSolid
+- BackgroundFillGradient
+- BackgroundFillFreeformGradient
+- BackgroundType
+- BackgroundTypeFill
+- BackgroundTypeWallpaper
+- BackgroundTypePattern
+- BackgroundTypeChatTheme
+- ChatBackground
+- ForumTopicCreated
+- ForumTopicClosed
+- ForumTopicEdited
+- ForumTopicReopened
+- GeneralForumTopicHidden
+- GeneralForumTopicUnhidden
+- SharedUser
+- UsersShared
+- ChatShared
+- WriteAccessAllowed
+- VideoChatScheduled
+- VideoChatStarted
+- VideoChatEnded
+- VideoChatParticipantsInvited
+- PaidMessagePriceChanged
+- DirectMessagePriceChanged
+- SuggestedPostApproved
+- SuggestedPostApprovalFailed
+- SuggestedPostDeclined
+- SuggestedPostPaid
+- SuggestedPostRefunded
+- GiveawayCreated
+- Giveaway
+- GiveawayWinners
+- GiveawayCompleted
+- LinkPreviewOptions
+- SuggestedPostPrice
+- SuggestedPostInfo
+- SuggestedPostParameters
+- DirectMessagesTopic
+- UserProfilePhotos
+- File
+- WebAppInfo
+- ReplyKeyboardMarkup
+- KeyboardButton
+- KeyboardButtonRequestUsers
+- KeyboardButtonRequestChat
+- KeyboardButtonPollType
+- ReplyKeyboardRemove
+- InlineKeyboardMarkup
+- InlineKeyboardButton
+- LoginUrl
+- SwitchInlineQueryChosenChat
+- CopyTextButton
+- CallbackQuery
+- ForceReply
+- ChatPhoto
+- ChatInviteLink
+- ChatAdministratorRights
+- ChatMemberUpdated
+- ChatMember
+- ChatMemberOwner
+- ChatMemberAdministrator
+- ChatMemberMember
+- ChatMemberRestricted
+- ChatMemberLeft
+- ChatMemberBanned
+- ChatJoinRequest
+- ChatPermissions
+- Birthdate
+- BusinessIntro
+- BusinessLocation
+- BusinessOpeningHoursInterval
+- BusinessOpeningHours
+- StoryAreaPosition
+- LocationAddress
+- StoryAreaType
+- StoryAreaTypeLocation
+- StoryAreaTypeSuggestedReaction
+- StoryAreaTypeLink
+- StoryAreaTypeWeather
+- StoryAreaTypeUniqueGift
+- StoryArea
+- ChatLocation
+- ReactionType
+- ReactionTypeEmoji
+- ReactionTypeCustomEmoji
+- ReactionTypePaid
+- ReactionCount
+- MessageReactionUpdated
+- MessageReactionCountUpdated
+- ForumTopic
+- Gift
+- Gifts
+- UniqueGiftModel
+- UniqueGiftSymbol
+- UniqueGiftBackdropColors
+- UniqueGiftBackdrop
+- UniqueGift
+- GiftInfo
+- UniqueGiftInfo
+- OwnedGift
+- OwnedGiftRegular
+- OwnedGiftUnique
+- OwnedGifts
+- AcceptedGiftTypes
+- StarAmount
+- BotCommand
+- BotCommandScope
+- Determining list of commands
+- BotCommandScopeDefault
+- BotCommandScopeAllPrivateChats
+- BotCommandScopeAllGroupChats
+- BotCommandScopeAllChatAdministrators
+- BotCommandScopeChat
+- BotCommandScopeChatAdministrators
+- BotCommandScopeChatMember
+- BotName
+- BotDescription
+- BotShortDescription
+- MenuButton
+- MenuButtonCommands
+- MenuButtonWebApp
+- MenuButtonDefault
+- ChatBoostSource
+- ChatBoostSourcePremium
+- ChatBoostSourceGiftCode
+- ChatBoostSourceGiveaway
+- ChatBoost
+- ChatBoostUpdated
+- ChatBoostRemoved
+- UserChatBoosts
+- BusinessBotRights
+- BusinessConnection
+- BusinessMessagesDeleted
+- ResponseParameters
+- InputMedia
+- InputMediaPhoto
+- InputMediaVideo
+- InputMediaAnimation
+- InputMediaAudio
+- InputMediaDocument
+- InputFile
+- InputPaidMedia
+- InputPaidMediaPhoto
+- InputPaidMediaVideo
+- InputProfilePhoto
+- InputProfilePhotoStatic
+- InputProfilePhotoAnimated
+- InputStoryContent
+- InputStoryContentPhoto
+- InputStoryContentVideo
+- Sending files
+- Accent colors
+- Profile accent colors
+- Inline mode objects
+
+### Available methods
+- getMe
+- logOut
+- close
+- sendMessage
+- forwardMessage
+- forwardMessages
+- copyMessage
+- copyMessages
+- sendPhoto
+- sendAudio
+- sendDocument
+- sendVideo
+- sendAnimation
+- sendVoice
+- sendVideoNote
+- sendPaidMedia
+- sendMediaGroup
+- sendLocation
+- sendVenue
+- sendContact
+- sendPoll
+- sendChecklist
+- sendDice
+- sendChatAction
+- setMessageReaction
+- getUserProfilePhotos
+- setUserEmojiStatus
+- getFile
+- banChatMember
+- unbanChatMember
+- restrictChatMember
+- promoteChatMember
+- setChatAdministratorCustomTitle
+- banChatSenderChat
+- unbanChatSenderChat
+- setChatPermissions
+- exportChatInviteLink
+- createChatInviteLink
+- editChatInviteLink
+- createChatSubscriptionInviteLink
+- editChatSubscriptionInviteLink
+- revokeChatInviteLink
+- approveChatJoinRequest
+- declineChatJoinRequest
+- setChatPhoto
+- deleteChatPhoto
+- setChatTitle
+- setChatDescription
+- pinChatMessage
+- unpinChatMessage
+- unpinAllChatMessages
+- leaveChat
+- getChat
+- getChatAdministrators
+- getChatMemberCount
+- getChatMember
+- setChatStickerSet
+- deleteChatStickerSet
+- getForumTopicIconStickers
+- createForumTopic
+- editForumTopic
+- closeForumTopic
+- reopenForumTopic
+- deleteForumTopic
+- unpinAllForumTopicMessages
+- editGeneralForumTopic
+- closeGeneralForumTopic
+- reopenGeneralForumTopic
+- hideGeneralForumTopic
+- unhideGeneralForumTopic
+- unpinAllGeneralForumTopicMessages
+- answerCallbackQuery
+- getUserChatBoosts
+- getBusinessConnection
+- setMyCommands
+- deleteMyCommands
+- getMyCommands
+- setMyName
+- getMyName
+- setMyDescription
+- getMyDescription
+- setMyShortDescription
+- getMyShortDescription
+- setChatMenuButton
+- getChatMenuButton
+- setMyDefaultAdministratorRights
+- getMyDefaultAdministratorRights
+- getAvailableGifts
+- sendGift
+- giftPremiumSubscription
+- verifyUser
+- verifyChat
+- removeUserVerification
+- removeChatVerification
+- readBusinessMessage
+- deleteBusinessMessages
+- setBusinessAccountName
+- setBusinessAccountUsername
+- setBusinessAccountBio
+- setBusinessAccountProfilePhoto
+- removeBusinessAccountProfilePhoto
+- setBusinessAccountGiftSettings
+- getBusinessAccountStarBalance
+- transferBusinessAccountStars
+- getBusinessAccountGifts
+- convertGiftToStars
+- upgradeGift
+- transferGift
+- postStory
+- editStory
+- deleteStory
+Inline mode methods
+
+### Updating messages
+- editMessageText
+- editMessageCaption
+- editMessageMedia
+- editMessageLiveLocation
+- stopMessageLiveLocation
+- editMessageChecklist
+- editMessageReplyMarkup
+- stopPoll
+- approveSuggestedPost
+- declineSuggestedPost
+- deleteMessage
+- deleteMessages
+
+### Stickers
+- Sticker
+- StickerSet
+- MaskPosition
+- InputSticker
+- sendSticker
+- getStickerSet
+- getCustomEmojiStickers
+- uploadStickerFile
+- createNewStickerSet
+- addStickerToSet
+- setStickerPositionInSet
+- deleteStickerFromSet
+- replaceStickerInSet
+- setStickerEmojiList
+- setStickerKeywords
+- setStickerMaskPosition
+- setStickerSetTitle
+- setStickerSetThumbnail
+- setCustomEmojiStickerSetThumbnail
+- deleteStickerSet
+
+### Inline mode
+- InlineQuery
+- answerInlineQuery
+- InlineQueryResultsButton
+- InlineQueryResult
+- InlineQueryResultArticle
+- InlineQueryResultPhoto
+- InlineQueryResultGif
+- InlineQueryResultMpeg4Gif
+- InlineQueryResultVideo
+- InlineQueryResultAudio
+- InlineQueryResultVoice
+- InlineQueryResultDocument
+- InlineQueryResultLocation
+- InlineQueryResultVenue
+- InlineQueryResultContact
+- InlineQueryResultGame
+- InlineQueryResultCachedPhoto
+- InlineQueryResultCachedGif
+- InlineQueryResultCachedMpeg4Gif
+- InlineQueryResultCachedSticker
+- InlineQueryResultCachedDocument
+- InlineQueryResultCachedVideo
+- InlineQueryResultCachedVoice
+- InlineQueryResultCachedAudio
+- InputMessageContent
+- InputTextMessageContent
+- InputLocationMessageContent
+- InputVenueMessageContent
+- InputContactMessageContent
+- InputInvoiceMessageContent
+- ChosenInlineResult
+- answerWebAppQuery
+- SentWebAppMessage
+- savePreparedInlineMessage
+- PreparedInlineMessage
+
+### Payments
+- sendInvoice
+- createInvoiceLink
+- answerShippingQuery
+- answerPreCheckoutQuery
+- getMyStarBalance
+- getStarTransactions
+- refundStarPayment
+- editUserStarSubscription
+- LabeledPrice
+- Invoice
+- ShippingAddress
+- OrderInfo
+- ShippingOption
+- SuccessfulPayment
+- RefundedPayment
+- ShippingQuery
+- PreCheckoutQuery
+- PaidMediaPurchased
+- RevenueWithdrawalState
+- RevenueWithdrawalStatePending
+- RevenueWithdrawalStateSucceeded
+- RevenueWithdrawalStateFailed
+- AffiliateInfo
+- TransactionPartner
+- TransactionPartnerUser
+- TransactionPartnerChat
+- TransactionPartnerAffiliateProgram
+- TransactionPartnerFragment
+- TransactionPartnerTelegramAds
+- TransactionPartnerTelegramApi
+- TransactionPartnerOther
+- StarTransaction
+- StarTransactions
+
+### Telegram Passport
+- PassportData
+- PassportFile
+- EncryptedPassportElement
+- EncryptedCredentials
+- setPassportDataErrors
+- PassportElementError
+- PassportElementErrorDataField
+- PassportElementErrorFrontSide
+- PassportElementErrorReverseSide
+- PassportElementErrorSelfie
+- PassportElementErrorFile
+- PassportElementErrorFiles
+- PassportElementErrorTranslationFile
+- PassportElementErrorTranslationFiles
+- PassportElementErrorUnspecified
+
+### Games
+- sendGame
+- Game
+- CallbackGame
+- setGameScore
+- getGameHighScores
+- GameHighScore
+
+### Implementation Details:
+- HTTP client using Effect's HttpClient
+- Proper rate limiting considerations
+- Configurable retry mechanisms
+- Environment-based configuration
+- Comprehensive error hierarchy
+- Support for both application/json and multipart/form-data
+
+**File Structure:**
+- Single file: `./src/TelegramBotApiService.ts`
+- Include all necessary Telegram types (User, Chat, Message, Update, etc.)
+- Export a complete, ready-to-use service
+
+**Quality Requirements:**
+- Production-ready with proper error recovery
+- Type-safe throughout
+- Well-documented with examples in JSDoc
+- Follows Effect-TS best practices
+- Handle all optional parameters properly
+- Support for both webhook and polling approaches
+
+**File Organization:**
+- Organize the code with clear sections using JSDoc headers
+- Group related types and methods together logically
+- Use descriptive comments to separate major API categories
+
+**Error Handling:**
+- Define custom error types for different Telegram API error categories
+- Implement proper retry logic for rate limits and server errors
+- Include error recovery strategies for network failures
+
+**Performance & Production:**
+- Implement request batching where applicable
+- Include connection pooling considerations
+- Add proper logging and monitoring hooks
+
+**Configuration:**
+- Use Effect Config for environment variables
+- Support different deployment environments
+- Include validation for required configuration
+
+Generate the complete implementation that can be immediately used in an Effect-TS application and covers ALL Telegram Bot API methods comprehensively.
