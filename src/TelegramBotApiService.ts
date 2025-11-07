@@ -660,7 +660,7 @@ export interface InaccessibleMessage {
   /** Unique message identifier inside the chat */
   message_id: Integer
   /** Always 0. The field can be used to differentiate regular and inaccessible messages. */
-  date: Integer
+  date: 0
 }
 
 /**
@@ -801,7 +801,7 @@ export type MessageOrigin =
  */
 export interface MessageOriginUser {
   /** Type of the message origin, always "user" */
-  type: String
+  type: "user"
   /** Date the message was sent originally in Unix time */
   date: Integer
   /** User that sent the message originally */
@@ -814,7 +814,7 @@ export interface MessageOriginUser {
  */
 export interface MessageOriginHiddenUser {
   /** Type of the message origin, always "hidden_user" */
-  type: String
+  type: "hidden_user"
   /** Date the message was sent originally in Unix time */
   date: Integer
   /** Name of the user that sent the message originally */
@@ -827,7 +827,7 @@ export interface MessageOriginHiddenUser {
  */
 export interface MessageOriginChat {
   /** Type of the message origin, always "chat" */
-  type: String
+  type: "chat"
   /** Date the message was sent originally in Unix time */
   date: Integer
   /** Chat that sent the message originally */
@@ -842,7 +842,7 @@ export interface MessageOriginChat {
  */
 export interface MessageOriginChannel {
   /** Type of the message origin, always "channel" */
-  type: String
+  type: "channel"
   /** Date the message was sent originally in Unix time */
   date: Integer
   /** Channel chat to which the message was originally sent */
@@ -1038,7 +1038,7 @@ export type PaidMedia = PaidMediaPreview | PaidMediaPhoto | PaidMediaVideo
  */
 export interface PaidMediaPreview {
   /** Type of the paid media, always "preview" */
-  type: String
+  type: "preview"
   /** Optional. Media width as defined by the sender */
   width?: Integer
   /** Optional. Media height as defined by the sender */
@@ -1053,7 +1053,7 @@ export interface PaidMediaPreview {
  */
 export interface PaidMediaPhoto {
   /** Type of the paid media, always "photo" */
-  type: String
+  type: "photo"
   /** The photo */
   photo: Array<PhotoSize>
 }
@@ -1064,7 +1064,7 @@ export interface PaidMediaPhoto {
  */
 export interface PaidMediaVideo {
   /** Type of the paid media, always "video" */
-  type: String
+  type: "video"
   /** The video */
   video: Video
 }
@@ -1362,7 +1362,7 @@ export type BackgroundFill =
  */
 export interface BackgroundFillSolid {
   /** Type of the background fill, always "solid" */
-  type: String
+  type: "solid"
   /** The color of the background fill in the RGB24 format */
   color: Integer
 }
@@ -1373,7 +1373,7 @@ export interface BackgroundFillSolid {
  */
 export interface BackgroundFillGradient {
   /** Type of the background fill, always "gradient" */
-  type: String
+  type: "gradient"
   /** Top color of the gradient in the RGB24 format */
   top_color: Integer
   /** Bottom color of the gradient in the RGB24 format */
@@ -1388,7 +1388,7 @@ export interface BackgroundFillGradient {
  */
 export interface BackgroundFillFreeformGradient {
   /** Type of the background fill, always "freeform_gradient" */
-  type: String
+  type: "freeform_gradient"
   /** A list of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format */
   colors: Array<Integer>
 }
@@ -1409,7 +1409,7 @@ export type BackgroundType =
  */
 export interface BackgroundTypeFill {
   /** Type of the background, always "fill" */
-  type: String
+  type: "fill"
   /** The background fill */
   fill: BackgroundFill
   /** Dimming of the background in dark themes, as a percentage; 0-100 */
@@ -1422,7 +1422,7 @@ export interface BackgroundTypeFill {
  */
 export interface BackgroundTypeWallpaper {
   /** Type of the background, always "wallpaper" */
-  type: String
+  type: "wallpaper"
   /** Document with the wallpaper */
   document: Document
   /** Dimming of the background in dark themes, as a percentage; 0-100 */
@@ -1439,7 +1439,7 @@ export interface BackgroundTypeWallpaper {
  */
 export interface BackgroundTypePattern {
   /** Type of the background, always "pattern" */
-  type: String
+  type: "pattern"
   /** Document with the pattern */
   document: Document
   /** The background fill that is combined with the pattern */
@@ -1458,7 +1458,7 @@ export interface BackgroundTypePattern {
  */
 export interface BackgroundTypeChatTheme {
   /** Type of the background, always "chat_theme" */
-  type: String
+  type: "chat_theme"
   /** Name of the chat theme, which is usually an emoji */
   theme_name: String
 }
@@ -2217,7 +2217,7 @@ export type ChatMember =
  */
 export interface ChatMemberOwner {
   /** The member's status in the chat, always "creator" */
-  status: String
+  status: "creator"
   /** Information about the user */
   user: User
   /** True, if the user's presence in the chat is hidden */
@@ -2232,7 +2232,7 @@ export interface ChatMemberOwner {
  */
 export interface ChatMemberAdministrator {
   /** The member's status in the chat, always "administrator" */
-  status: String
+  status: "administrator"
   /** Information about the user */
   user: User
   /** True, if the bot is allowed to edit administrator privileges of that user */
@@ -2279,7 +2279,7 @@ export interface ChatMemberAdministrator {
  */
 export interface ChatMemberMember {
   /** The member's status in the chat, always "member" */
-  status: String
+  status: "member"
   /** Information about the user */
   user: User
   /** Optional. Date when the user's subscription will expire; Unix time */
@@ -2292,7 +2292,7 @@ export interface ChatMemberMember {
  */
 export interface ChatMemberRestricted {
   /** The member's status in the chat, always "restricted" */
-  status: String
+  status: "restricted"
   /** Information about the user */
   user: User
   /** True, if the user is a member of the chat at the moment of the request */
@@ -2335,7 +2335,7 @@ export interface ChatMemberRestricted {
  */
 export interface ChatMemberLeft {
   /** The member's status in the chat, always "left" */
-  status: String
+  status: "left"
   /** Information about the user */
   user: User
 }
@@ -2346,7 +2346,7 @@ export interface ChatMemberLeft {
  */
 export interface ChatMemberBanned {
   /** The member's status in the chat, always "kicked" */
-  status: String
+  status: "kicked"
   /** Information about the user */
   user: User
   /** Date when restrictions will be lifted for this user; Unix time. If 0, then the user is banned forever */
@@ -2517,7 +2517,7 @@ export type StoryAreaType =
  */
 export interface StoryAreaTypeLocation {
   /** Type of the area, always "location" */
-  type: String
+  type: "location"
   /** Location latitude in degrees */
   latitude: Float
   /** Location longitude in degrees */
@@ -2532,7 +2532,7 @@ export interface StoryAreaTypeLocation {
  */
 export interface StoryAreaTypeSuggestedReaction {
   /** Type of the area, always "suggested_reaction" */
-  type: String
+  type: "suggested_reaction"
   /** Type of the reaction */
   reaction_type: ReactionType
   /** Optional. Pass True if the reaction area has a dark background */
@@ -2547,7 +2547,7 @@ export interface StoryAreaTypeSuggestedReaction {
  */
 export interface StoryAreaTypeLink {
   /** Type of the area, always "link" */
-  type: String
+  type: "link"
   /** HTTP or tg:// URL to be opened when the area is clicked */
   url: String
 }
@@ -2558,7 +2558,7 @@ export interface StoryAreaTypeLink {
  */
 export interface StoryAreaTypeWeather {
   /** Type of the area, always "weather" */
-  type: String
+  type: "weather"
   /** Temperature, in degree Celsius */
   temperature: Float
   /** Emoji representing the weather */
@@ -2573,7 +2573,7 @@ export interface StoryAreaTypeWeather {
  */
 export interface StoryAreaTypeUniqueGift {
   /** Type of the area, always "unique_gift" */
-  type: String
+  type: "unique_gift"
   /** Unique name of the gift */
   name: String
 }
@@ -2615,7 +2615,7 @@ export type ReactionType =
  */
 export interface ReactionTypeEmoji {
   /** Type of the reaction, always "emoji" */
-  type: String
+  type: "emoji"
   /** Reaction emoji. Currently, it can be one of "❤", "👍", "👎", "🔥", "🥰", "👏", "😁", "🤔", "🤯", "😱", "🤬", "😢", "🎉", "🤩", "🤮", "💩", "🙏", "👌", "🕊", "🤡", "🥱", "🥴", "😍", "🐳", "❤‍🔥", "🌚", "🌭", "💯", "🤣", "⚡", "🍌", "🏆", "💔", "🤨", "😐", "🍓", "🍾", "💋", "🖕", "😈", "😴", "😭", "🤓", "👻", "👨‍💻", "👀", "🎃", "🙈", "😇", "😨", "🤝", "✍", "🤗", "🫡", "🎅", "🎄", "☃", "💅", "🤪", "🗿", "🆒", "💘", "🙉", "🦄", "😘", "💊", "🙊", "😎", "👾", "🤷‍♂", "🤷", "🤷‍♀", "😡" */
   emoji: String
 }
@@ -2626,7 +2626,7 @@ export interface ReactionTypeEmoji {
  */
 export interface ReactionTypeCustomEmoji {
   /** Type of the reaction, always "custom_emoji" */
-  type: String
+  type: "custom_emoji"
   /** Custom emoji identifier */
   custom_emoji_id: String
 }
@@ -2637,7 +2637,7 @@ export interface ReactionTypeCustomEmoji {
  */
 export interface ReactionTypePaid {
   /** Type of the reaction, always "paid" */
-  type: String
+  type: "paid"
 }
 
 /**
@@ -2861,7 +2861,7 @@ export type OwnedGift = OwnedGiftRegular | OwnedGiftUnique
  */
 export interface OwnedGiftRegular {
   /** Type of the gift, always "regular" */
-  type: String
+  type: "regular"
   /** Information about the regular gift */
   gift: Gift
   /** Optional. Unique identifier of the gift for the bot; for gifts received on behalf of business accounts only */
@@ -2894,7 +2894,7 @@ export interface OwnedGiftRegular {
  */
 export interface OwnedGiftUnique {
   /** Type of the gift, always "unique" */
-  type: String
+  type: "unique"
   /** Information about the unique gift */
   gift: UniqueGift
   /** Optional. Unique identifier of the received gift for the bot; for gifts received on behalf of business accounts only */
@@ -3155,7 +3155,7 @@ export type ChatBoostSource =
  */
 export interface ChatBoostSourcePremium {
   /** Source of the boost, always "premium" */
-  source: String
+  source: "premium"
   /** User that boosted the chat */
   user: User
 }
@@ -3166,7 +3166,7 @@ export interface ChatBoostSourcePremium {
  */
 export interface ChatBoostSourceGiftCode {
   /** Source of the boost, always "gift_code" */
-  source: String
+  source: "gift_code"
   /** User for which the gift code was created */
   user: User
 }
@@ -3177,7 +3177,7 @@ export interface ChatBoostSourceGiftCode {
  */
 export interface ChatBoostSourceGiveaway {
   /** Source of the boost, always "giveaway" */
-  source: String
+  source: "giveaway"
   /** Identifier of a message in the chat with the giveaway; the message could have been deleted already. May be 0 if the message isn't sent yet. */
   giveaway_message_id: Integer
   /** Optional. User that won the prize in the giveaway if any; for Telegram Premium giveaways only */
@@ -7091,7 +7091,7 @@ export interface SuccessfulPayment {
  */
 export interface RefundedPayment {
   /** Three-letter ISO 4217 Telegram Stars. Currently, always "XTR" */
-  currency: String
+  currency: "XTR"
   /** Total refunded price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45, total_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). */
   total_amount: Integer
   /** Bot-specified invoice payload */
@@ -7164,7 +7164,7 @@ export type RevenueWithdrawalState =
  */
 export interface RevenueWithdrawalStatePending {
   /** Type of the state, always "pending" */
-  type: String
+  type: "pending"
 }
 
 /**
@@ -7173,7 +7173,7 @@ export interface RevenueWithdrawalStatePending {
  */
 export interface RevenueWithdrawalStateSucceeded {
   /** Type of the state, always "succeeded" */
-  type: String
+  type: "succeeded"
   /** Date the withdrawal was completed in Unix time */
   date: Integer
   /** An HTTPS URL that can be used to see transaction details */
@@ -7186,7 +7186,7 @@ export interface RevenueWithdrawalStateSucceeded {
  */
 export interface RevenueWithdrawalStateFailed {
   /** Type of the state, always "failed" */
-  type: String
+  type: "failed"
 }
 
 /**
@@ -7225,7 +7225,7 @@ export type TransactionPartner =
  */
 export interface TransactionPartnerUser {
   /** Type of the transaction partner, always "user" */
-  type: String
+  type: "user"
   /** Type of the transaction, currently one of "invoice_payment" for payments via invoices, "paid_media_payment" for payments for paid media, "gift_purchase" for gifts sent by the bot, "premium_purchase" for Telegram Premium subscriptions gifted by the bot, "business_account_transfer" for direct transfers from managed business accounts */
   transaction_type: String
   /** Information about the user */
@@ -7252,7 +7252,7 @@ export interface TransactionPartnerUser {
  */
 export interface TransactionPartnerChat {
   /** Type of the transaction partner, always "chat" */
-  type: String
+  type: "chat"
   /** Information about the chat */
   chat: Chat
   /** Optional. The gift sent to the chat by the bot */
@@ -7265,7 +7265,7 @@ export interface TransactionPartnerChat {
  */
 export interface TransactionPartnerAffiliateProgram {
   /** Type of the transaction partner, always "affiliate_program" */
-  type: String
+  type: "affiliate_program"
   /** Optional. Information about the bot that sponsored the affiliate program */
   sponsor_user?: User
   /** The number of Telegram Stars received by the bot for each 1000 Telegram Stars received by the affiliate program sponsor from referred users */
@@ -7278,7 +7278,7 @@ export interface TransactionPartnerAffiliateProgram {
  */
 export interface TransactionPartnerFragment {
   /** Type of the transaction partner, always "fragment" */
-  type: String
+  type: "fragment"
   /** Optional. State of the transaction if the transaction is outgoing */
   withdrawal_state?: RevenueWithdrawalState
 }
@@ -7289,7 +7289,7 @@ export interface TransactionPartnerFragment {
  */
 export interface TransactionPartnerTelegramAds {
   /** Type of the transaction partner, always "telegram_ads" */
-  type: String
+  type: "telegram_ads"
 }
 
 /**
@@ -7298,7 +7298,7 @@ export interface TransactionPartnerTelegramAds {
  */
 export interface TransactionPartnerTelegramApi {
   /** Type of the transaction partner, always "telegram_api" */
-  type: String
+  type: "telegram_api"
   /** The number of successful requests that exceeded regular limits and were therefore billed */
   request_count: Integer
 }
@@ -7309,7 +7309,7 @@ export interface TransactionPartnerTelegramApi {
  */
 export interface TransactionPartnerOther {
   /** Type of the transaction partner, always "other" */
-  type: String
+  type: "other"
 }
 
 /**
