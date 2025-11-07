@@ -6,7 +6,7 @@
  * with proper type safety, error handling, and documentation.
  */
 
-import { HttpClientRequest, type HttpClientResponse } from "@effect/platform"
+import { HttpClient, HttpClientRequest, type HttpClientResponse } from "@effect/platform"
 import { Config, Context, Data, Effect, Layer, pipe, Redacted } from "effect"
 
 // =============================================================================
@@ -3462,7 +3462,11 @@ export interface InputMediaDocument {
  * This object represents the contents of a file to be uploaded. Must be posted using multipart/form-data in the usual way that files are uploaded via the browser.
  * @see https://core.telegram.org/bots/api#inputfile
  */
-export type InputFile = ReadableStream | string // TODO: add Buffer
+export interface InputFile {
+  content?: string | Buffer | Blob
+  file?: File
+  filename?: string
+}
 
 /**
  * This object describes the paid media to be sent. Currently, it can be one of InputPaidMediaPhoto, InputPaidMediaVideo
@@ -7683,7 +7687,7 @@ export interface GameHighScore {
  */
 const makeTelegramRequest = (
   method: string,
-  params: unknown,
+  params: any,
   config: TelegramBotApiConfig
 ): HttpClientRequest.HttpClientRequest => {
   const tokenValue = Redacted.value(config.token)
@@ -7696,15 +7700,15 @@ const makeTelegramRequest = (
     // For file uploads, use multipart/form-data
     const formData = buildFormData(params)
     return HttpClientRequest.post(url).pipe(
-      HttpClientRequest.bodyFormData(formData),
-      HttpClientRequest.timeout(config.timeout)
+      HttpClientRequest.bodyFormData(formData)
+      // HttpClientRequest.timeout(config.timeout)
     )
   } else {
     // For regular requests, use JSON
     return HttpClientRequest.post(url).pipe(
-      HttpClientRequest.bodyJson(params),
-      HttpClientRequest.setHeader("Content-Type", "application/json"),
-      HttpClientRequest.timeout(config.timeout)
+      HttpClientRequest.bodyFormDataRecord(params),
+      HttpClientRequest.setHeader("Content-Type", "application/json")
+      // HttpClientRequest.timeout(config.timeout)
     )
   }
 }
@@ -7747,29 +7751,34 @@ const containsFile = (params: unknown): boolean => {
  */
 const buildFormData = (params: unknown): FormData => {
   const formData = new FormData()
-
   if (typeof params !== "object" || params === null) {
     return formData
   }
-
   const obj = params as Record<string, unknown>
   for (const key in obj) {
     const value = obj[key]
     if (value !== undefined && value !== null) {
       if (typeof value === "object") {
         // Handle InputFile objects
-        if ("file" in value) {
+        if ("file" in value && value.file instanceof File) {
           // File object
-          formData.append(key, (value as { file: File }).file)
+          formData.append(key, value.file)
         } else if ("content" in value) {
           // File content as string or buffer
           const content = (value as { content: string | Buffer }).content
+          const filename = (value as { filename?: string }).filename || key
           if (typeof content === "string") {
-            formData.append(key, new Blob([content]), key)
+            formData.append(key, new Blob([content]), filename)
           } else {
-            // If content is a buffer, handle accordingly
-            formData.append(key, new Blob([content]), key)
+            // If content is a buffer, convert to Uint8Array first
+            formData.append(key, new Blob([new Uint8Array(content)]), filename)
           }
+        } else if (value instanceof File) {
+          // Handle direct File objects
+          formData.append(key, value)
+        } else if (value instanceof Blob) {
+          // Handle direct Blob objects
+          formData.append(key, value)
         } else {
           // For other objects, stringify them
           formData.append(key, JSON.stringify(value))
