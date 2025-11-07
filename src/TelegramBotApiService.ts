@@ -1,5 +1,5 @@
 /**
- * Comprehensive Telegram Bot API Service Implementation
+ * Comprehensive Telegram Bot API 9.2(216) Service Implementation
  * Using the Effect-TS ecosystem
  *
  * This file contains a complete implementation of all Telegram Bot API methods
@@ -3629,7 +3629,7 @@ export interface SendMessageParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3714,7 +3714,7 @@ export interface CopyMessageParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3778,7 +3778,7 @@ export interface SendPhotoParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3823,7 +3823,7 @@ export interface SendAudioParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3864,7 +3864,7 @@ export interface SendDocumentParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3919,7 +3919,7 @@ export interface SendVideoParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -3968,7 +3968,7 @@ export interface SendAnimationParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4007,7 +4007,7 @@ export interface SendVoiceParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4044,7 +4044,7 @@ export interface SendVideoNoteParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4085,7 +4085,7 @@ export interface SendPaidMediaParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4153,7 +4153,7 @@ export interface SendLocationParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4198,7 +4198,7 @@ export interface SendVenueParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4235,7 +4235,7 @@ export interface SendContactParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4288,7 +4288,7 @@ export interface SendPollParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -4342,7 +4342,7 @@ export interface SendDiceParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
@@ -5759,7 +5759,7 @@ export interface SendStickerParams {
   /** Description of the message to reply to */
   reply_parameters?: ReplyParameters
   /** Additional interface options. A JSON-serialized object for an custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user */
-  reply_markup?: ForceReply
+  reply_markup?: InlineKeyboardMarkup | ReplyKeyboardMarkup | ReplyKeyboardRemove | ForceReply
 }
 
 /**
