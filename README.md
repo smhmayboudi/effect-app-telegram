@@ -1,31 +1,40 @@
-# Effect Package Template
+# Telegram Bot App
 
-This template provides a solid foundation for building scalable and maintainable TypeScript package with Effect. 
+This is a simple Telegram bot application that replies "hi" to every message it receives.
 
-## Running Code
+## Setup
 
-This template leverages [tsx](https://tsx.is) to allow execution of TypeScript files via NodeJS as if they were written in plain JavaScript.
+1. Create a `.env` file in the root directory with your Telegram Bot API token:
+   ```
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   ```
 
-To execute a file with `tsx`:
+2. Make sure you have pnpm installed and dependencies installed:
+   ```bash
+   pnpm install
+   ```
 
-```sh
-pnpm tsx ./path/to/the/file.ts
+## Running the Application
+
+To run the application:
+
+```bash
+pnpm tsx src/TelegramBotApp.ts
 ```
 
-## Operations
+## How It Works
 
-**Building**
+The application uses `getUpdates` to poll for new messages and replies "hi" to every message received. The bot will continuously run and respond to messages.
 
-To build the package:
+## Configuration
 
-```sh
-pnpm build
-```
+The application can be configured using environment variables:
 
-**Testing**
+- `TELEGRAM_BOT_TOKEN` (required): Your Telegram Bot API token
+- `TELEGRAM_API_BASE_URL` (optional): API base URL (defaults to official API)
+- `TELEGRAM_REQUEST_TIMEOUT` (optional): Request timeout in ms (defaults to 30000)
+- `TELEGRAM_RETRY_ATTEMPTS` (optional): Number of retry attempts (defaults to 3)
+- `TELEGRAM_RETRY_DELAY` (optional): Delay between retries in ms (defaults to 1000)
+- `TELEGRAM_RATE_LIMIT_DELAY` (optional): Delay for rate limiting in ms (defaults to 1000)
 
-To test the package:
-
-```sh
-pnpm test
-```
+The bot will reply to every message with "hi".
