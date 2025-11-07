@@ -6,7 +6,7 @@
  * with proper type safety, error handling, and documentation.
  */
 
-import { Config, Context, Data, Effect, Layer, pipe, Secret } from "effect"
+import { Config, Context, Data, Effect, Layer, pipe, Redacted, Secret } from "effect"
 
 // =============================================================================
 // Error Types
@@ -7797,8 +7797,8 @@ const handleTelegramResponse = <T>(
       catch: (error) =>
         new TelegramBotApiInvalidResponseError({
           message: `Failed to parse response JSON: ${String(error)}`,
-          cause: error,
-        }),
+          cause: error
+        })
     }),
     Effect.flatMap((json) => {
       if (
@@ -7832,25 +7832,24 @@ const handleTelegramResponse = <T>(
         } else if (errorCode === "401" || errorCode === "403") {
           return Effect.fail(
             new TelegramBotApiUnauthorizedError({
-              message: `Unauthorized: ${message}`,
+              message: `Unauthorized: ${message}`
             })
           )
         } else if (errorCode === "429") {
-          const retryAfter =
-            json.parameters && "retry_after" in json.parameters
-              ? ((json.parameters as any).retry_after as number)
-              : undefined
+          const retryAfter = json.parameters && "retry_after" in json.parameters
+            ? ((json.parameters as any).retry_after as number)
+            : undefined
           return Effect.fail(
             new TelegramBotApiRateLimitError({
               message: `Rate limited: ${message}`,
-              retryAfter,
+              retryAfter
             })
           )
         } else {
           return Effect.fail(
             new TelegramBotApiMethodError({
               message,
-              method: (json.parameters?.method as string) || "unknown",
+              method: (json.parameters?.method as string) || "unknown"
             })
           )
         }
@@ -7859,7 +7858,7 @@ const handleTelegramResponse = <T>(
         return Effect.fail(
           new TelegramBotApiInvalidResponseError({
             message: `Invalid response format: ${JSON.stringify(json)}`,
-            response: json,
+            response: json
           })
         )
       }
@@ -7870,7 +7869,7 @@ const handleTelegramResponse = <T>(
       }
       return Effect.fail(
         new TelegramBotApiError({
-          message: `Unexpected error processing response: ${String(error)}`,
+          message: `Unexpected error processing response: ${String(error)}`
         })
       )
     })
@@ -7897,8 +7896,8 @@ const executeTelegramRequest = <T>(
       catch: (error) =>
         new TelegramBotApiNetworkError({
           message: `Network error: ${String(error)}`,
-          cause: error,
-        }),
+          cause: error
+        })
     }),
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
@@ -7917,7 +7916,7 @@ const executeTelegramRequest = <T>(
           error._tag === "TelegramBotApiNetworkError" ||
           error._tag === "TelegramBotApiRateLimitError"
         )
-      },
+      }
     }),
     Effect.catchAll((error) => {
       if (error._tag === "TelegramBotApiError") {
@@ -7925,7 +7924,7 @@ const executeTelegramRequest = <T>(
       }
       return Effect.fail(
         new TelegramBotApiError({
-          message: `Unexpected error: ${String(error)}`,
+          message: `Unexpected error: ${String(error)}`
         })
       )
     })
@@ -7937,657 +7936,113 @@ const executeTelegramRequest = <T>(
 // =============================================================================
 
 /**
- * Live implementation of the Telegram Bot API Service
- */
-export class TelegramBotApiServiceImpl extends Effect.Service<TelegramBotApiServiceContext>()(
-  "TelegramBotApiService",
-  () => ({
-    create: Effect.gen(function* () {
-      const config = yield* TelegramBotApiConfigContext
-
-      return TelegramBotApiService.of({
-        // Getting updates
-        getUpdates: (params) =>
-          executeTelegramRequest("getUpdates", params, config),
-        setWebhook: (params) =>
-          executeTelegramRequest("setWebhook", params, config),
-        deleteWebhook: (params) =>
-          executeTelegramRequest("deleteWebhook", params, config),
-        getWebhookInfo: () =>
-          executeTelegramRequest("getWebhookInfo", {}, config),
-
-        // Available methods
-        getMe: () => executeTelegramRequest("getMe", {}, config),
-        logOut: () => executeTelegramRequest("logOut", {}, config),
-        close: () => executeTelegramRequest("close", {}, config),
-        sendMessage: (params) =>
-          executeTelegramRequest("sendMessage", params, config),
-        forwardMessage: (params) =>
-          executeTelegramRequest("forwardMessage", params, config),
-        forwardMessages: (params) =>
-          executeTelegramRequest("forwardMessages", params, config),
-        copyMessage: (params) =>
-          executeTelegramRequest("copyMessage", params, config),
-        copyMessages: (params) =>
-          executeTelegramRequest("copyMessages", params, config),
-        sendPhoto: (params) =>
-          executeTelegramRequest("sendPhoto", params, config),
-        sendAudio: (params) =>
-          executeTelegramRequest("sendAudio", params, config),
-        sendDocument: (params) =>
-          executeTelegramRequest("sendDocument", params, config),
-        sendVideo: (params) =>
-          executeTelegramRequest("sendVideo", params, config),
-        sendAnimation: (params) =>
-          executeTelegramRequest("sendAnimation", params, config),
-        sendVoice: (params) =>
-          executeTelegramRequest("sendVoice", params, config),
-        sendVideoNote: (params) =>
-          executeTelegramRequest("sendVideoNote", params, config),
-        sendPaidMedia: (params) =>
-          executeTelegramRequest("sendPaidMedia", params, config),
-        sendMediaGroup: (params) =>
-          executeTelegramRequest("sendMediaGroup", params, config),
-        sendLocation: (params) =>
-          executeTelegramRequest("sendLocation", params, config),
-        sendVenue: (params) =>
-          executeTelegramRequest("sendVenue", params, config),
-        sendContact: (params) =>
-          executeTelegramRequest("sendContact", params, config),
-        sendPoll: (params) =>
-          executeTelegramRequest("sendPoll", params, config),
-        sendChecklist: (params) =>
-          executeTelegramRequest("sendChecklist", params, config),
-        sendDice: (params) =>
-          executeTelegramRequest("sendDice", params, config),
-        sendChatAction: (params) =>
-          executeTelegramRequest("sendChatAction", params, config),
-        setMessageReaction: (params) =>
-          executeTelegramRequest("setMessageReaction", params, config),
-        getUserProfilePhotos: (params) =>
-          executeTelegramRequest("getUserProfilePhotos", params, config),
-        setUserEmojiStatus: (params) =>
-          executeTelegramRequest("setUserEmojiStatus", params, config),
-        getFile: (params) => executeTelegramRequest("getFile", params, config),
-        banChatMember: (params) =>
-          executeTelegramRequest("banChatMember", params, config),
-        unbanChatMember: (params) =>
-          executeTelegramRequest("unbanChatMember", params, config),
-        restrictChatMember: (params) =>
-          executeTelegramRequest("restrictChatMember", params, config),
-        promoteChatMember: (params) =>
-          executeTelegramRequest("promoteChatMember", params, config),
-        setChatAdministratorCustomTitle: (params) =>
-          executeTelegramRequest(
-            "setChatAdministratorCustomTitle",
-            params,
-            config
-          ),
-        banChatSenderChat: (params) =>
-          executeTelegramRequest("banChatSenderChat", params, config),
-        unbanChatSenderChat: (params) =>
-          executeTelegramRequest("unbanChatSenderChat", params, config),
-        setChatPermissions: (params) =>
-          executeTelegramRequest("setChatPermissions", params, config),
-        exportChatInviteLink: (params) =>
-          executeTelegramRequest("exportChatInviteLink", params, config),
-        createChatInviteLink: (params) =>
-          executeTelegramRequest("createChatInviteLink", params, config),
-        editChatInviteLink: (params) =>
-          executeTelegramRequest("editChatInviteLink", params, config),
-        createChatSubscriptionInviteLink: (params) =>
-          executeTelegramRequest(
-            "createChatSubscriptionInviteLink",
-            params,
-            config
-          ),
-        editChatSubscriptionInviteLink: (params) =>
-          executeTelegramRequest(
-            "editChatSubscriptionInviteLink",
-            params,
-            config
-          ),
-        revokeChatInviteLink: (params) =>
-          executeTelegramRequest("revokeChatInviteLink", params, config),
-        approveChatJoinRequest: (params) =>
-          executeTelegramRequest("approveChatJoinRequest", params, config),
-        declineChatJoinRequest: (params) =>
-          executeTelegramRequest("declineChatJoinRequest", params, config),
-        setChatPhoto: (params) =>
-          executeTelegramRequest("setChatPhoto", params, config),
-        deleteChatPhoto: (params) =>
-          executeTelegramRequest("deleteChatPhoto", params, config),
-        setChatTitle: (params) =>
-          executeTelegramRequest("setChatTitle", params, config),
-        setChatDescription: (params) =>
-          executeTelegramRequest("setChatDescription", params, config),
-        pinChatMessage: (params) =>
-          executeTelegramRequest("pinChatMessage", params, config),
-        unpinChatMessage: (params) =>
-          executeTelegramRequest("unpinChatMessage", params, config),
-        unpinAllChatMessages: (params) =>
-          executeTelegramRequest("unpinAllChatMessages", params, config),
-        leaveChat: (params) =>
-          executeTelegramRequest("leaveChat", params, config),
-        getChat: (params) => executeTelegramRequest("getChat", params, config),
-        getChatAdministrators: (params) =>
-          executeTelegramRequest("getChatAdministrators", params, config),
-        getChatMemberCount: (params) =>
-          executeTelegramRequest("getChatMemberCount", params, config),
-        getChatMember: (params) =>
-          executeTelegramRequest("getChatMember", params, config),
-        setChatStickerSet: (params) =>
-          executeTelegramRequest("setChatStickerSet", params, config),
-        deleteChatStickerSet: (params) =>
-          executeTelegramRequest("deleteChatStickerSet", params, config),
-        getForumTopicIconStickers: () =>
-          executeTelegramRequest("getForumTopicIconStickers", {}, config),
-        createForumTopic: (params) =>
-          executeTelegramRequest("createForumTopic", params, config),
-        editForumTopic: (params) =>
-          executeTelegramRequest("editForumTopic", params, config),
-        closeForumTopic: (params) =>
-          executeTelegramRequest("closeForumTopic", params, config),
-        reopenForumTopic: (params) =>
-          executeTelegramRequest("reopenForumTopic", params, config),
-        deleteForumTopic: (params) =>
-          executeTelegramRequest("deleteForumTopic", params, config),
-        unpinAllForumTopicMessages: (params) =>
-          executeTelegramRequest("unpinAllForumTopicMessages", params, config),
-        editGeneralForumTopic: (params) =>
-          executeTelegramRequest("editGeneralForumTopic", params, config),
-        closeGeneralForumTopic: (params) =>
-          executeTelegramRequest("closeGeneralForumTopic", params, config),
-        reopenGeneralForumTopic: (params) =>
-          executeTelegramRequest("reopenGeneralForumTopic", params, config),
-        hideGeneralForumTopic: (params) =>
-          executeTelegramRequest("hideGeneralForumTopic", params, config),
-        unhideGeneralForumTopic: (params) =>
-          executeTelegramRequest("unhideGeneralForumTopic", params, config),
-        unpinAllGeneralForumTopicMessages: (params) =>
-          executeTelegramRequest(
-            "unpinAllGeneralForumTopicMessages",
-            params,
-            config
-          ),
-        answerCallbackQuery: (params) =>
-          executeTelegramRequest("answerCallbackQuery", params, config),
-        getUserChatBoosts: (params) =>
-          executeTelegramRequest("getUserChatBoosts", params, config),
-        getBusinessConnection: (params) =>
-          executeTelegramRequest("getBusinessConnection", params, config),
-        setMyCommands: (params) =>
-          executeTelegramRequest("setMyCommands", params, config),
-        deleteMyCommands: (params) =>
-          executeTelegramRequest("deleteMyCommands", params, config),
-        getMyCommands: (params) =>
-          executeTelegramRequest("getMyCommands", params, config),
-        setMyName: (params) =>
-          executeTelegramRequest("setMyName", params, config),
-        getMyName: (params) =>
-          executeTelegramRequest("getMyName", params, config),
-        setMyDescription: (params) =>
-          executeTelegramRequest("setMyDescription", params, config),
-        getMyDescription: (params) =>
-          executeTelegramRequest("getMyDescription", params, config),
-        setMyShortDescription: (params) =>
-          executeTelegramRequest("setMyShortDescription", params, config),
-        getMyShortDescription: (params) =>
-          executeTelegramRequest("getMyShortDescription", params, config),
-        setChatMenuButton: (params) =>
-          executeTelegramRequest("setChatMenuButton", params, config),
-        getChatMenuButton: (params) =>
-          executeTelegramRequest("getChatMenuButton", params, config),
-        setMyDefaultAdministratorRights: (params) =>
-          executeTelegramRequest(
-            "setMyDefaultAdministratorRights",
-            params,
-            config
-          ),
-        getMyDefaultAdministratorRights: (params) =>
-          executeTelegramRequest(
-            "getMyDefaultAdministratorRights",
-            params,
-            config
-          ),
-        getAvailableGifts: () =>
-          executeTelegramRequest("getAvailableGifts", {}, config),
-        sendGift: (params) =>
-          executeTelegramRequest("sendGift", params, config),
-        giftPremiumSubscription: (params) =>
-          executeTelegramRequest("giftPremiumSubscription", params, config),
-        verifyUser: (params) =>
-          executeTelegramRequest("verifyUser", params, config),
-        verifyChat: (params) =>
-          executeTelegramRequest("verifyChat", params, config),
-        removeUserVerification: () =>
-          executeTelegramRequest("removeUserVerification", {}, config),
-        removeChatVerification: () =>
-          executeTelegramRequest("removeChatVerification", {}, config),
-        readBusinessMessage: (params) =>
-          executeTelegramRequest("readBusinessMessage", params, config),
-        deleteBusinessMessages: (params) =>
-          executeTelegramRequest("deleteBusinessMessages", params, config),
-        setBusinessAccountName: (params) =>
-          executeTelegramRequest("setBusinessAccountName", params, config),
-        setBusinessAccountUsername: (params) =>
-          executeTelegramRequest("setBusinessAccountUsername", params, config),
-        setBusinessAccountBio: (params) =>
-          executeTelegramRequest("setBusinessAccountBio", params, config),
-        setBusinessAccountProfilePhoto: (params) =>
-          executeTelegramRequest(
-            "setBusinessAccountProfilePhoto",
-            params,
-            config
-          ),
-        removeBusinessAccountProfilePhoto: () =>
-          executeTelegramRequest(
-            "removeBusinessAccountProfilePhoto",
-            {},
-            config
-          ),
-        setBusinessAccountGiftSettings: (params) =>
-          executeTelegramRequest(
-            "setBusinessAccountGiftSettings",
-            params,
-            config
-          ),
-        getBusinessAccountStarBalance: () =>
-          executeTelegramRequest("getBusinessAccountStarBalance", {}, config),
-        transferBusinessAccountStars: (params) =>
-          executeTelegramRequest(
-            "transferBusinessAccountStars",
-            params,
-            config
-          ),
-        getBusinessAccountGifts: () =>
-          executeTelegramRequest("getBusinessAccountGifts", {}, config),
-        convertGiftToStars: (params) =>
-          executeTelegramRequest("convertGiftToStars", params, config),
-        upgradeGift: (params) =>
-          executeTelegramRequest("upgradeGift", params, config),
-        transferGift: (params) =>
-          executeTelegramRequest("transferGift", params, config),
-        postStory: (params) =>
-          executeTelegramRequest("postStory", params, config),
-        editStory: (params) =>
-          executeTelegramRequest("editStory", params, config),
-        deleteStory: (params) =>
-          executeTelegramRequest("deleteStory", params, config),
-
-        // Updating messages
-        editMessageText: (params) =>
-          executeTelegramRequest("editMessageText", params, config),
-        editMessageCaption: (params) =>
-          executeTelegramRequest("editMessageCaption", params, config),
-        editMessageMedia: (params) =>
-          executeTelegramRequest("editMessageMedia", params, config),
-        editMessageLiveLocation: (params) =>
-          executeTelegramRequest("editMessageLiveLocation", params, config),
-        stopMessageLiveLocation: (params) =>
-          executeTelegramRequest("stopMessageLiveLocation", params, config),
-        editMessageChecklist: (params) =>
-          executeTelegramRequest("editMessageChecklist", params, config),
-        editMessageReplyMarkup: (params) =>
-          executeTelegramRequest("editMessageReplyMarkup", params, config),
-        stopPoll: (params) =>
-          executeTelegramRequest("stopPoll", params, config),
-        approveSuggestedPost: (params) =>
-          executeTelegramRequest("approveSuggestedPost", params, config),
-        declineSuggestedPost: (params) =>
-          executeTelegramRequest("declineSuggestedPost", params, config),
-        deleteMessage: (params) =>
-          executeTelegramRequest("deleteMessage", params, config),
-        deleteMessages: (params) =>
-          executeTelegramRequest("deleteMessages", params, config),
-
-        // Stickers
-        sendSticker: (params) =>
-          executeTelegramRequest("sendSticker", params, config),
-        getStickerSet: (params) =>
-          executeTelegramRequest("getStickerSet", params, config),
-        getCustomEmojiStickers: (params) =>
-          executeTelegramRequest("getCustomEmojiStickers", params, config),
-        uploadStickerFile: (params) =>
-          executeTelegramRequest("uploadStickerFile", params, config),
-        createNewStickerSet: (params) =>
-          executeTelegramRequest("createNewStickerSet", params, config),
-        addStickerToSet: (params) =>
-          executeTelegramRequest("addStickerToSet", params, config),
-        setStickerPositionInSet: (params) =>
-          executeTelegramRequest("setStickerPositionInSet", params, config),
-        deleteStickerFromSet: (params) =>
-          executeTelegramRequest("deleteStickerFromSet", params, config),
-        replaceStickerInSet: (params) =>
-          executeTelegramRequest("replaceStickerInSet", params, config),
-        setStickerEmojiList: (params) =>
-          executeTelegramRequest("setStickerEmojiList", params, config),
-        setStickerKeywords: (params) =>
-          executeTelegramRequest("setStickerKeywords", params, config),
-        setStickerMaskPosition: (params) =>
-          executeTelegramRequest("setStickerMaskPosition", params, config),
-        setStickerSetTitle: (params) =>
-          executeTelegramRequest("setStickerSetTitle", params, config),
-        setStickerSetThumbnail: (params) =>
-          executeTelegramRequest("setStickerSetThumbnail", params, config),
-        setCustomEmojiStickerSetThumbnail: (params) =>
-          executeTelegramRequest(
-            "setCustomEmojiStickerSetThumbnail",
-            params,
-            config
-          ),
-        deleteStickerSet: (params) =>
-          executeTelegramRequest("deleteStickerSet", params, config),
-
-        // Inline mode
-        answerInlineQuery: (params) =>
-          executeTelegramRequest("answerInlineQuery", params, config),
-        answerWebAppQuery: (params) =>
-          executeTelegramRequest("answerWebAppQuery", params, config),
-        savePreparedInlineMessage: (params) =>
-          executeTelegramRequest("savePreparedInlineMessage", params, config),
-
-        // Payments
-        sendInvoice: (params) =>
-          executeTelegramRequest("sendInvoice", params, config),
-        createInvoiceLink: (params) =>
-          executeTelegramRequest("createInvoiceLink", params, config),
-        answerShippingQuery: (params) =>
-          executeTelegramRequest("answerShippingQuery", params, config),
-        answerPreCheckoutQuery: (params) =>
-          executeTelegramRequest("answerPreCheckoutQuery", params, config),
-        getMyStarBalance: () =>
-          executeTelegramRequest("getMyStarBalance", {}, config),
-        getStarTransactions: (params) =>
-          executeTelegramRequest("getStarTransactions", params, config),
-        refundStarPayment: (params) =>
-          executeTelegramRequest("refundStarPayment", params, config),
-        editUserStarSubscription: (params) =>
-          executeTelegramRequest("editUserStarSubscription", params, config),
-
-        // Telegram Passport
-        setPassportDataErrors: (params) =>
-          executeTelegramRequest("setPassportDataErrors", params, config),
-
-        // Games
-        sendGame: (params) =>
-          executeTelegramRequest("sendGame", params, config),
-        setGameScore: (params) =>
-          executeTelegramRequest("setGameScore", params, config),
-        getGameHighScores: (params) =>
-          executeTelegramRequest("getGameHighScores", params, config),
-      })
-    }),
-  })
-) {}
-
-/**
- * Live layer for the Telegram Bot API Service
- */
-export const TelegramBotApiServiceLive: Layer.Layer<
-  TelegramBotApiServiceContext,
-  never,
-  TelegramBotApiConfigContext
-> = TelegramBotApiServiceImpl
-
-/**
  * The Telegram Bot API Service interface
  * Defines all available methods in the Telegram Bot API
  */
 export interface TelegramBotApiService {
   // Getting updates
-  getUpdates(
-    params?: GetUpdatesParams
-  ): Effect.Effect<Array<Update>, TelegramBotApiError>
-  setWebhook(
-    params?: SetWebhookParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteWebhook(
-    params?: DeleteWebhookParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  getUpdates(params?: GetUpdatesParams): Effect.Effect<Array<Update>, TelegramBotApiError>
+  setWebhook(params?: SetWebhookParams): Effect.Effect<true, TelegramBotApiError>
+  deleteWebhook(params?: DeleteWebhookParams): Effect.Effect<true, TelegramBotApiError>
   getWebhookInfo(): Effect.Effect<WebhookInfo, TelegramBotApiError>
 
   // Available methods
   getMe(): Effect.Effect<User, TelegramBotApiError>
   logOut(): Effect.Effect<true, TelegramBotApiError>
   close(): Effect.Effect<true, TelegramBotApiError>
-  sendMessage(
-    params: SendMessageParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  forwardMessage(
-    params: ForwardMessageParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  forwardMessages(
-    params: ForwardMessagesParams
-  ): Effect.Effect<Array<MessageId>, TelegramBotApiError>
-  copyMessage(
-    params: CopyMessageParams
-  ): Effect.Effect<MessageId, TelegramBotApiError>
-  copyMessages(
-    params: CopyMessagesParams
-  ): Effect.Effect<Array<MessageId>, TelegramBotApiError>
-  sendPhoto(
-    params: SendPhotoParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendAudio(
-    params: SendAudioParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendDocument(
-    params: SendDocumentParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendVideo(
-    params: SendVideoParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendAnimation(
-    params: SendAnimationParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendVoice(
-    params: SendVoiceParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendVideoNote(
-    params: SendVideoNoteParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendPaidMedia(
-    params: SendPaidMediaParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendMediaGroup(
-    params: SendMediaGroupParams
-  ): Effect.Effect<Array<Message | boolean>, TelegramBotApiError>
-  sendLocation(
-    params: SendLocationParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendVenue(
-    params: SendVenueParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  sendContact(
-    params: SendContactParams
-  ): Effect.Effect<Message, TelegramBotApiError>
+  sendMessage(params: SendMessageParams): Effect.Effect<Message, TelegramBotApiError>
+  forwardMessage(params: ForwardMessageParams): Effect.Effect<Message, TelegramBotApiError>
+  forwardMessages(params: ForwardMessagesParams): Effect.Effect<Array<MessageId>, TelegramBotApiError>
+  copyMessage(params: CopyMessageParams): Effect.Effect<MessageId, TelegramBotApiError>
+  copyMessages(params: CopyMessagesParams): Effect.Effect<Array<MessageId>, TelegramBotApiError>
+  sendPhoto(params: SendPhotoParams): Effect.Effect<Message, TelegramBotApiError>
+  sendAudio(params: SendAudioParams): Effect.Effect<Message, TelegramBotApiError>
+  sendDocument(params: SendDocumentParams): Effect.Effect<Message, TelegramBotApiError>
+  sendVideo(params: SendVideoParams): Effect.Effect<Message, TelegramBotApiError>
+  sendAnimation(params: SendAnimationParams): Effect.Effect<Message, TelegramBotApiError>
+  sendVoice(params: SendVoiceParams): Effect.Effect<Message, TelegramBotApiError>
+  sendVideoNote(params: SendVideoNoteParams): Effect.Effect<Message, TelegramBotApiError>
+  sendPaidMedia(params: SendPaidMediaParams): Effect.Effect<Message, TelegramBotApiError>
+  sendMediaGroup(params: SendMediaGroupParams): Effect.Effect<Array<Message | boolean>, TelegramBotApiError>
+  sendLocation(params: SendLocationParams): Effect.Effect<Message, TelegramBotApiError>
+  sendVenue(params: SendVenueParams): Effect.Effect<Message, TelegramBotApiError>
+  sendContact(params: SendContactParams): Effect.Effect<Message, TelegramBotApiError>
   sendPoll(params: SendPollParams): Effect.Effect<Message, TelegramBotApiError>
-  sendChecklist(
-    params: SendChecklistParams
-  ): Effect.Effect<Message, TelegramBotApiError>
+  sendChecklist(params: SendChecklistParams): Effect.Effect<Message, TelegramBotApiError>
   sendDice(params: SendDiceParams): Effect.Effect<Message, TelegramBotApiError>
-  sendChatAction(
-    params: SendChatActionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setMessageReaction(
-    params: SetMessageReactionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getUserProfilePhotos(
-    params: GetUserProfilePhotosParams
-  ): Effect.Effect<UserProfilePhotos, TelegramBotApiError>
-  setUserEmojiStatus(
-    params: SetUserEmojiStatusParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  sendChatAction(params: SendChatActionParams): Effect.Effect<true, TelegramBotApiError>
+  setMessageReaction(params: SetMessageReactionParams): Effect.Effect<true, TelegramBotApiError>
+  getUserProfilePhotos(params: GetUserProfilePhotosParams): Effect.Effect<UserProfilePhotos, TelegramBotApiError>
+  setUserEmojiStatus(params: SetUserEmojiStatusParams): Effect.Effect<true, TelegramBotApiError>
   getFile(params: GetFileParams): Effect.Effect<File, TelegramBotApiError>
-  banChatMember(
-    params: BanChatMemberParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unbanChatMember(
-    params: UnbanChatMemberParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  restrictChatMember(
-    params: RestrictChatMemberParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  promoteChatMember(
-    params: PromoteChatMemberParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  banChatMember(params: BanChatMemberParams): Effect.Effect<true, TelegramBotApiError>
+  unbanChatMember(params: UnbanChatMemberParams): Effect.Effect<true, TelegramBotApiError>
+  restrictChatMember(params: RestrictChatMemberParams): Effect.Effect<true, TelegramBotApiError>
+  promoteChatMember(params: PromoteChatMemberParams): Effect.Effect<true, TelegramBotApiError>
   setChatAdministratorCustomTitle(
     params: SetChatAdministratorCustomTitleParams
   ): Effect.Effect<true, TelegramBotApiError>
-  banChatSenderChat(
-    params: BanChatSenderChatParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unbanChatSenderChat(
-    params: UnbanChatSenderChatParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setChatPermissions(
-    params: SetChatPermissionsParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  exportChatInviteLink(
-    params: ExportChatInviteLinkParams
-  ): Effect.Effect<String, TelegramBotApiError>
-  createChatInviteLink(
-    params: CreateChatInviteLinkParams
-  ): Effect.Effect<ChatInviteLink, TelegramBotApiError>
-  editChatInviteLink(
-    params: EditChatInviteLinkParams
-  ): Effect.Effect<ChatInviteLink, TelegramBotApiError>
+  banChatSenderChat(params: BanChatSenderChatParams): Effect.Effect<true, TelegramBotApiError>
+  unbanChatSenderChat(params: UnbanChatSenderChatParams): Effect.Effect<true, TelegramBotApiError>
+  setChatPermissions(params: SetChatPermissionsParams): Effect.Effect<true, TelegramBotApiError>
+  exportChatInviteLink(params: ExportChatInviteLinkParams): Effect.Effect<String, TelegramBotApiError>
+  createChatInviteLink(params: CreateChatInviteLinkParams): Effect.Effect<ChatInviteLink, TelegramBotApiError>
+  editChatInviteLink(params: EditChatInviteLinkParams): Effect.Effect<ChatInviteLink, TelegramBotApiError>
   createChatSubscriptionInviteLink(
     params: CreateChatSubscriptionInviteLinkParams
   ): Effect.Effect<ChatInviteLink, TelegramBotApiError>
   editChatSubscriptionInviteLink(
     params: EditChatSubscriptionInviteLinkParams
   ): Effect.Effect<ChatInviteLink, TelegramBotApiError>
-  revokeChatInviteLink(
-    params: RevokeChatInviteLinkParams
-  ): Effect.Effect<ChatInviteLink, TelegramBotApiError>
-  approveChatJoinRequest(
-    params: ApproveChatJoinRequestParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  declineChatJoinRequest(
-    params: DeclineChatJoinRequestParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setChatPhoto(
-    params: SetChatPhotoParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteChatPhoto(
-    params: DeleteChatPhotoParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setChatTitle(
-    params: SetChatTitleParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setChatDescription(
-    params: SetChatDescriptionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  pinChatMessage(
-    params: PinChatMessageParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unpinChatMessage(
-    params: UnpinChatMessageParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unpinAllChatMessages(
-    params: UnpinAllChatMessagesParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  revokeChatInviteLink(params: RevokeChatInviteLinkParams): Effect.Effect<ChatInviteLink, TelegramBotApiError>
+  approveChatJoinRequest(params: ApproveChatJoinRequestParams): Effect.Effect<true, TelegramBotApiError>
+  declineChatJoinRequest(params: DeclineChatJoinRequestParams): Effect.Effect<true, TelegramBotApiError>
+  setChatPhoto(params: SetChatPhotoParams): Effect.Effect<true, TelegramBotApiError>
+  deleteChatPhoto(params: DeleteChatPhotoParams): Effect.Effect<true, TelegramBotApiError>
+  setChatTitle(params: SetChatTitleParams): Effect.Effect<true, TelegramBotApiError>
+  setChatDescription(params: SetChatDescriptionParams): Effect.Effect<true, TelegramBotApiError>
+  pinChatMessage(params: PinChatMessageParams): Effect.Effect<true, TelegramBotApiError>
+  unpinChatMessage(params: UnpinChatMessageParams): Effect.Effect<true, TelegramBotApiError>
+  unpinAllChatMessages(params: UnpinAllChatMessagesParams): Effect.Effect<true, TelegramBotApiError>
   leaveChat(params: LeaveChatParams): Effect.Effect<true, TelegramBotApiError>
-  getChat(
-    params: GetChatParams
-  ): Effect.Effect<ChatFullInfo, TelegramBotApiError>
-  getChatAdministrators(
-    params: GetChatAdministratorsParams
-  ): Effect.Effect<Array<ChatMember>, TelegramBotApiError>
-  getChatMemberCount(
-    params: GetChatMemberCountParams
-  ): Effect.Effect<Integer, TelegramBotApiError>
-  getChatMember(
-    params: GetChatMemberParams
-  ): Effect.Effect<ChatMember, TelegramBotApiError>
-  setChatStickerSet(
-    params: SetChatStickerSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteChatStickerSet(
-    params: DeleteChatStickerSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  getChat(params: GetChatParams): Effect.Effect<ChatFullInfo, TelegramBotApiError>
+  getChatAdministrators(params: GetChatAdministratorsParams): Effect.Effect<Array<ChatMember>, TelegramBotApiError>
+  getChatMemberCount(params: GetChatMemberCountParams): Effect.Effect<Integer, TelegramBotApiError>
+  getChatMember(params: GetChatMemberParams): Effect.Effect<ChatMember, TelegramBotApiError>
+  setChatStickerSet(params: SetChatStickerSetParams): Effect.Effect<true, TelegramBotApiError>
+  deleteChatStickerSet(params: DeleteChatStickerSetParams): Effect.Effect<true, TelegramBotApiError>
   getForumTopicIconStickers(): Effect.Effect<
     Array<Sticker>,
     TelegramBotApiError
   >
-  createForumTopic(
-    params: CreateForumTopicParams
-  ): Effect.Effect<ForumTopic, TelegramBotApiError>
-  editForumTopic(
-    params: EditForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  closeForumTopic(
-    params: CloseForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  reopenForumTopic(
-    params: ReopenForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteForumTopic(
-    params: DeleteForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unpinAllForumTopicMessages(
-    params: UnpinAllForumTopicMessagesParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  editGeneralForumTopic(
-    params: EditGeneralForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  closeGeneralForumTopic(
-    params: CloseGeneralForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  reopenGeneralForumTopic(
-    params: ReopenGeneralForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  hideGeneralForumTopic(
-    params: HideGeneralForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  unhideGeneralForumTopic(
-    params: UnhideGeneralForumTopicParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  createForumTopic(params: CreateForumTopicParams): Effect.Effect<ForumTopic, TelegramBotApiError>
+  editForumTopic(params: EditForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  closeForumTopic(params: CloseForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  reopenForumTopic(params: ReopenForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  deleteForumTopic(params: DeleteForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  unpinAllForumTopicMessages(params: UnpinAllForumTopicMessagesParams): Effect.Effect<true, TelegramBotApiError>
+  editGeneralForumTopic(params: EditGeneralForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  closeGeneralForumTopic(params: CloseGeneralForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  reopenGeneralForumTopic(params: ReopenGeneralForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  hideGeneralForumTopic(params: HideGeneralForumTopicParams): Effect.Effect<true, TelegramBotApiError>
+  unhideGeneralForumTopic(params: UnhideGeneralForumTopicParams): Effect.Effect<true, TelegramBotApiError>
   unpinAllGeneralForumTopicMessages(
     params: UnpinAllGeneralForumTopicMessagesParams
   ): Effect.Effect<true, TelegramBotApiError>
-  answerCallbackQuery(
-    params: AnswerCallbackQueryParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getUserChatBoosts(
-    params: GetUserChatBoostsParams
-  ): Effect.Effect<UserChatBoosts, TelegramBotApiError>
-  getBusinessConnection(
-    params: GetBusinessConnectionParams
-  ): Effect.Effect<BusinessConnection, TelegramBotApiError>
-  setMyCommands(
-    params: SetMyCommandsParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteMyCommands(
-    params?: DeleteMyCommandsParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getMyCommands(
-    params?: GetMyCommandsParams
-  ): Effect.Effect<Array<BotCommand>, TelegramBotApiError>
+  answerCallbackQuery(params: AnswerCallbackQueryParams): Effect.Effect<true, TelegramBotApiError>
+  getUserChatBoosts(params: GetUserChatBoostsParams): Effect.Effect<UserChatBoosts, TelegramBotApiError>
+  getBusinessConnection(params: GetBusinessConnectionParams): Effect.Effect<BusinessConnection, TelegramBotApiError>
+  setMyCommands(params: SetMyCommandsParams): Effect.Effect<true, TelegramBotApiError>
+  deleteMyCommands(params?: DeleteMyCommandsParams): Effect.Effect<true, TelegramBotApiError>
+  getMyCommands(params?: GetMyCommandsParams): Effect.Effect<Array<BotCommand>, TelegramBotApiError>
   setMyName(params?: SetMyNameParams): Effect.Effect<true, TelegramBotApiError>
-  getMyName(
-    params?: GetMyNameParams
-  ): Effect.Effect<BotName, TelegramBotApiError>
-  setMyDescription(
-    params?: SetMyDescriptionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getMyDescription(
-    params?: GetMyDescriptionParams
-  ): Effect.Effect<BotDescription, TelegramBotApiError>
-  setMyShortDescription(
-    params?: SetMyShortDescriptionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getMyShortDescription(
-    params?: GetMyShortDescriptionParams
-  ): Effect.Effect<BotShortDescription, TelegramBotApiError>
-  setChatMenuButton(
-    params?: SetChatMenuButtonParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  getChatMenuButton(
-    params?: GetChatMenuButtonParams
-  ): Effect.Effect<MenuButton, TelegramBotApiError>
+  getMyName(params?: GetMyNameParams): Effect.Effect<BotName, TelegramBotApiError>
+  setMyDescription(params?: SetMyDescriptionParams): Effect.Effect<true, TelegramBotApiError>
+  getMyDescription(params?: GetMyDescriptionParams): Effect.Effect<BotDescription, TelegramBotApiError>
+  setMyShortDescription(params?: SetMyShortDescriptionParams): Effect.Effect<true, TelegramBotApiError>
+  getMyShortDescription(params?: GetMyShortDescriptionParams): Effect.Effect<BotShortDescription, TelegramBotApiError>
+  setChatMenuButton(params?: SetChatMenuButtonParams): Effect.Effect<true, TelegramBotApiError>
+  getChatMenuButton(params?: GetChatMenuButtonParams): Effect.Effect<MenuButton, TelegramBotApiError>
   setMyDefaultAdministratorRights(
     params?: SetMyDefaultAdministratorRightsParams
   ): Effect.Effect<true, TelegramBotApiError>
@@ -8596,237 +8051,325 @@ export interface TelegramBotApiService {
   ): Effect.Effect<ChatAdministratorRights, TelegramBotApiError>
   getAvailableGifts(): Effect.Effect<Gifts, TelegramBotApiError>
   sendGift(params: SendGiftParams): Effect.Effect<true, TelegramBotApiError>
-  giftPremiumSubscription(
-    params: GiftPremiumSubscriptionParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  giftPremiumSubscription(params: GiftPremiumSubscriptionParams): Effect.Effect<true, TelegramBotApiError>
   verifyUser(params: VerifyUserParams): Effect.Effect<true, TelegramBotApiError>
   verifyChat(params: VerifyChatParams): Effect.Effect<true, TelegramBotApiError>
   removeUserVerification(): Effect.Effect<true, TelegramBotApiError>
   removeChatVerification(): Effect.Effect<true, TelegramBotApiError>
-  readBusinessMessage(
-    params: ReadBusinessMessageParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteBusinessMessages(
-    params: DeleteBusinessMessagesParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setBusinessAccountName(
-    params: SetBusinessAccountNameParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setBusinessAccountUsername(
-    params: SetBusinessAccountUsernameParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setBusinessAccountBio(
-    params: SetBusinessAccountBioParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setBusinessAccountProfilePhoto(
-    params: SetBusinessAccountProfilePhotoParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  readBusinessMessage(params: ReadBusinessMessageParams): Effect.Effect<true, TelegramBotApiError>
+  deleteBusinessMessages(params: DeleteBusinessMessagesParams): Effect.Effect<true, TelegramBotApiError>
+  setBusinessAccountName(params: SetBusinessAccountNameParams): Effect.Effect<true, TelegramBotApiError>
+  setBusinessAccountUsername(params: SetBusinessAccountUsernameParams): Effect.Effect<true, TelegramBotApiError>
+  setBusinessAccountBio(params: SetBusinessAccountBioParams): Effect.Effect<true, TelegramBotApiError>
+  setBusinessAccountProfilePhoto(params: SetBusinessAccountProfilePhotoParams): Effect.Effect<true, TelegramBotApiError>
   removeBusinessAccountProfilePhoto(): Effect.Effect<true, TelegramBotApiError>
-  setBusinessAccountGiftSettings(
-    params: SetBusinessAccountGiftSettingsParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  setBusinessAccountGiftSettings(params: SetBusinessAccountGiftSettingsParams): Effect.Effect<true, TelegramBotApiError>
   getBusinessAccountStarBalance(): Effect.Effect<
     StarAmount,
     TelegramBotApiError
   >
-  transferBusinessAccountStars(
-    params: TransferBusinessAccountStarsParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  transferBusinessAccountStars(params: TransferBusinessAccountStarsParams): Effect.Effect<true, TelegramBotApiError>
   getBusinessAccountGifts(): Effect.Effect<Gifts, TelegramBotApiError>
-  convertGiftToStars(
-    params: ConvertGiftToStarsParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  upgradeGift(
-    params: UpgradeGiftParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  transferGift(
-    params: TransferGiftParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  postStory(
-    params: PostStoryParams
-  ): Effect.Effect<Message, TelegramBotApiError>
+  convertGiftToStars(params: ConvertGiftToStarsParams): Effect.Effect<true, TelegramBotApiError>
+  upgradeGift(params: UpgradeGiftParams): Effect.Effect<true, TelegramBotApiError>
+  transferGift(params: TransferGiftParams): Effect.Effect<true, TelegramBotApiError>
+  postStory(params: PostStoryParams): Effect.Effect<Message, TelegramBotApiError>
   editStory(params: EditStoryParams): Effect.Effect<true, TelegramBotApiError>
-  deleteStory(
-    params: DeleteStoryParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  deleteStory(params: DeleteStoryParams): Effect.Effect<true, TelegramBotApiError>
 
   // Updating messages
-  editMessageText(
-    params: EditMessageTextParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  editMessageCaption(
-    params: EditMessageCaptionParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  editMessageMedia(
-    params: EditMessageMediaParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  editMessageLiveLocation(
-    params: EditMessageLiveLocationParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  stopMessageLiveLocation(
-    params: StopMessageLiveLocationParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  editMessageChecklist(
-    params: EditMessageChecklistParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  editMessageReplyMarkup(
-    params: EditMessageReplyMarkupParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageText(params: EditMessageTextParams): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageCaption(params: EditMessageCaptionParams): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageMedia(params: EditMessageMediaParams): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageLiveLocation(params: EditMessageLiveLocationParams): Effect.Effect<Message | true, TelegramBotApiError>
+  stopMessageLiveLocation(params: StopMessageLiveLocationParams): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageChecklist(params: EditMessageChecklistParams): Effect.Effect<Message | true, TelegramBotApiError>
+  editMessageReplyMarkup(params: EditMessageReplyMarkupParams): Effect.Effect<Message | true, TelegramBotApiError>
   stopPoll(params: StopPollParams): Effect.Effect<Poll, TelegramBotApiError>
-  approveSuggestedPost(
-    params: ApproveSuggestedPostParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  declineSuggestedPost(
-    params: DeclineSuggestedPostParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteMessage(
-    params: DeleteMessageParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteMessages(
-    params: DeleteMessagesParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  approveSuggestedPost(params: ApproveSuggestedPostParams): Effect.Effect<true, TelegramBotApiError>
+  declineSuggestedPost(params: DeclineSuggestedPostParams): Effect.Effect<true, TelegramBotApiError>
+  deleteMessage(params: DeleteMessageParams): Effect.Effect<true, TelegramBotApiError>
+  deleteMessages(params: DeleteMessagesParams): Effect.Effect<true, TelegramBotApiError>
 
   // Stickers
-  sendSticker(
-    params: SendStickerParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  getStickerSet(
-    params: GetStickerSetParams
-  ): Effect.Effect<StickerSet, TelegramBotApiError>
-  getCustomEmojiStickers(
-    params: GetCustomEmojiStickersParams
-  ): Effect.Effect<Array<Sticker>, TelegramBotApiError>
-  uploadStickerFile(
-    params: UploadStickerFileParams
-  ): Effect.Effect<File, TelegramBotApiError>
-  createNewStickerSet(
-    params: CreateNewStickerSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  addStickerToSet(
-    params: AddStickerToSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerPositionInSet(
-    params: SetStickerPositionInSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  deleteStickerFromSet(
-    params: DeleteStickerFromSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  replaceStickerInSet(
-    params: ReplaceStickerInSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerEmojiList(
-    params: SetStickerEmojiListParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerKeywords(
-    params: SetStickerKeywordsParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerMaskPosition(
-    params: SetStickerMaskPositionParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerSetTitle(
-    params: SetStickerSetTitleParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  setStickerSetThumbnail(
-    params: SetStickerSetThumbnailParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  sendSticker(params: SendStickerParams): Effect.Effect<Message, TelegramBotApiError>
+  getStickerSet(params: GetStickerSetParams): Effect.Effect<StickerSet, TelegramBotApiError>
+  getCustomEmojiStickers(params: GetCustomEmojiStickersParams): Effect.Effect<Array<Sticker>, TelegramBotApiError>
+  uploadStickerFile(params: UploadStickerFileParams): Effect.Effect<File, TelegramBotApiError>
+  createNewStickerSet(params: CreateNewStickerSetParams): Effect.Effect<true, TelegramBotApiError>
+  addStickerToSet(params: AddStickerToSetParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerPositionInSet(params: SetStickerPositionInSetParams): Effect.Effect<true, TelegramBotApiError>
+  deleteStickerFromSet(params: DeleteStickerFromSetParams): Effect.Effect<true, TelegramBotApiError>
+  replaceStickerInSet(params: ReplaceStickerInSetParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerEmojiList(params: SetStickerEmojiListParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerKeywords(params: SetStickerKeywordsParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerMaskPosition(params: SetStickerMaskPositionParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerSetTitle(params: SetStickerSetTitleParams): Effect.Effect<true, TelegramBotApiError>
+  setStickerSetThumbnail(params: SetStickerSetThumbnailParams): Effect.Effect<true, TelegramBotApiError>
   setCustomEmojiStickerSetThumbnail(
     params: SetCustomEmojiStickerSetThumbnailParams
   ): Effect.Effect<true, TelegramBotApiError>
-  deleteStickerSet(
-    params: DeleteStickerSetParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  deleteStickerSet(params: DeleteStickerSetParams): Effect.Effect<true, TelegramBotApiError>
 
   // Inline mode
-  answerInlineQuery(
-    params: AnswerInlineQueryParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  answerWebAppQuery(
-    params: AnswerWebAppQueryParams
-  ): Effect.Effect<SentWebAppMessage, TelegramBotApiError>
+  answerInlineQuery(params: AnswerInlineQueryParams): Effect.Effect<true, TelegramBotApiError>
+  answerWebAppQuery(params: AnswerWebAppQueryParams): Effect.Effect<SentWebAppMessage, TelegramBotApiError>
   savePreparedInlineMessage(
     params: SavePreparedInlineMessageParams
   ): Effect.Effect<PreparedInlineMessage, TelegramBotApiError>
 
   // Payments
-  sendInvoice(
-    params: SendInvoiceParams
-  ): Effect.Effect<Message, TelegramBotApiError>
-  createInvoiceLink(
-    params: CreateInvoiceLinkParams
-  ): Effect.Effect<String, TelegramBotApiError>
-  answerShippingQuery(
-    params: AnswerShippingQueryParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  answerPreCheckoutQuery(
-    params: AnswerPreCheckoutQueryParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  sendInvoice(params: SendInvoiceParams): Effect.Effect<Message, TelegramBotApiError>
+  createInvoiceLink(params: CreateInvoiceLinkParams): Effect.Effect<String, TelegramBotApiError>
+  answerShippingQuery(params: AnswerShippingQueryParams): Effect.Effect<true, TelegramBotApiError>
+  answerPreCheckoutQuery(params: AnswerPreCheckoutQueryParams): Effect.Effect<true, TelegramBotApiError>
   getMyStarBalance(): Effect.Effect<StarAmount, TelegramBotApiError>
-  getStarTransactions(
-    params: GetStarTransactionsParams
-  ): Effect.Effect<StarTransactions, TelegramBotApiError>
-  refundStarPayment(
-    params: RefundStarPaymentParams
-  ): Effect.Effect<true, TelegramBotApiError>
-  editUserStarSubscription(
-    params: EditUserStarSubscriptionParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  getStarTransactions(params: GetStarTransactionsParams): Effect.Effect<StarTransactions, TelegramBotApiError>
+  refundStarPayment(params: RefundStarPaymentParams): Effect.Effect<true, TelegramBotApiError>
+  editUserStarSubscription(params: EditUserStarSubscriptionParams): Effect.Effect<true, TelegramBotApiError>
 
   // Telegram Passport
-  setPassportDataErrors(
-    params: SetPassportDataErrorsParams
-  ): Effect.Effect<true, TelegramBotApiError>
+  setPassportDataErrors(params: SetPassportDataErrorsParams): Effect.Effect<true, TelegramBotApiError>
 
   // Games
   sendGame(params: SendGameParams): Effect.Effect<Message, TelegramBotApiError>
-  setGameScore(
-    params: SetGameScoreParams
-  ): Effect.Effect<Message | true, TelegramBotApiError>
-  getGameHighScores(
-    params: GetGameHighScoresParams
-  ): Effect.Effect<Array<GameHighScore>, TelegramBotApiError>
-}
-
-/**
- * Configuration for the Telegram Bot API Service
- */
-export interface TelegramBotApiConfig {
-  readonly token: Secret.Secret
-  readonly apiBaseUrl: string
-  readonly timeout: number
-  readonly retryAttempts: number
-  readonly retryDelay: number
-  readonly rateLimitDelay: number
+  setGameScore(params: SetGameScoreParams): Effect.Effect<Message | true, TelegramBotApiError>
+  getGameHighScores(params: GetGameHighScoresParams): Effect.Effect<Array<GameHighScore>, TelegramBotApiError>
 }
 
 export class TelegramBotApiServiceContext extends Context.Tag(
   "@services/TelegramBotApiService"
 )<TelegramBotApiServiceContext, TelegramBotApiService>() {}
 
-export class TelegramBotApiConfigContext extends Context.Tag(
-  "@services/TelegramBotApiConfig"
-)<TelegramBotApiConfigContext, TelegramBotApiConfig>() {}
+/**
+ * Live implementation of the Telegram Bot API Service
+ */
+
+export const TelegramBotApiServiceLive = Layer.effect(
+  TelegramBotApiServiceContext,
+  Effect.gen(function*() {
+    const config = yield* TelegramBotApiConfigContext
+
+    return TelegramBotApiServiceContext.of({
+      // Getting updates
+      getUpdates: (params) => executeTelegramRequest("getUpdates", params, config),
+      setWebhook: (params) => executeTelegramRequest("setWebhook", params, config),
+      deleteWebhook: (params) => executeTelegramRequest("deleteWebhook", params, config),
+      getWebhookInfo: () => executeTelegramRequest("getWebhookInfo", {}, config),
+
+      // Available methods
+      getMe: () => executeTelegramRequest("getMe", {}, config),
+      logOut: () => executeTelegramRequest("logOut", {}, config),
+      close: () => executeTelegramRequest("close", {}, config),
+      sendMessage: (params) => executeTelegramRequest("sendMessage", params, config),
+      forwardMessage: (params) => executeTelegramRequest("forwardMessage", params, config),
+      forwardMessages: (params) => executeTelegramRequest("forwardMessages", params, config),
+      copyMessage: (params) => executeTelegramRequest("copyMessage", params, config),
+      copyMessages: (params) => executeTelegramRequest("copyMessages", params, config),
+      sendPhoto: (params) => executeTelegramRequest("sendPhoto", params, config),
+      sendAudio: (params) => executeTelegramRequest("sendAudio", params, config),
+      sendDocument: (params) => executeTelegramRequest("sendDocument", params, config),
+      sendVideo: (params) => executeTelegramRequest("sendVideo", params, config),
+      sendAnimation: (params) => executeTelegramRequest("sendAnimation", params, config),
+      sendVoice: (params) => executeTelegramRequest("sendVoice", params, config),
+      sendVideoNote: (params) => executeTelegramRequest("sendVideoNote", params, config),
+      sendPaidMedia: (params) => executeTelegramRequest("sendPaidMedia", params, config),
+      sendMediaGroup: (params) => executeTelegramRequest("sendMediaGroup", params, config),
+      sendLocation: (params) => executeTelegramRequest("sendLocation", params, config),
+      sendVenue: (params) => executeTelegramRequest("sendVenue", params, config),
+      sendContact: (params) => executeTelegramRequest("sendContact", params, config),
+      sendPoll: (params) => executeTelegramRequest("sendPoll", params, config),
+      sendChecklist: (params) => executeTelegramRequest("sendChecklist", params, config),
+      sendDice: (params) => executeTelegramRequest("sendDice", params, config),
+      sendChatAction: (params) => executeTelegramRequest("sendChatAction", params, config),
+      setMessageReaction: (params) => executeTelegramRequest("setMessageReaction", params, config),
+      getUserProfilePhotos: (params) => executeTelegramRequest("getUserProfilePhotos", params, config),
+      setUserEmojiStatus: (params) => executeTelegramRequest("setUserEmojiStatus", params, config),
+      getFile: (params) => executeTelegramRequest("getFile", params, config),
+      banChatMember: (params) => executeTelegramRequest("banChatMember", params, config),
+      unbanChatMember: (params) => executeTelegramRequest("unbanChatMember", params, config),
+      restrictChatMember: (params) => executeTelegramRequest("restrictChatMember", params, config),
+      promoteChatMember: (params) => executeTelegramRequest("promoteChatMember", params, config),
+      setChatAdministratorCustomTitle: (params) =>
+        executeTelegramRequest("setChatAdministratorCustomTitle", params, config),
+      banChatSenderChat: (params) => executeTelegramRequest("banChatSenderChat", params, config),
+      unbanChatSenderChat: (params) => executeTelegramRequest("unbanChatSenderChat", params, config),
+      setChatPermissions: (params) => executeTelegramRequest("setChatPermissions", params, config),
+      exportChatInviteLink: (params) => executeTelegramRequest("exportChatInviteLink", params, config),
+      createChatInviteLink: (params) => executeTelegramRequest("createChatInviteLink", params, config),
+      editChatInviteLink: (params) => executeTelegramRequest("editChatInviteLink", params, config),
+      createChatSubscriptionInviteLink: (params) =>
+        executeTelegramRequest("createChatSubscriptionInviteLink", params, config),
+      editChatSubscriptionInviteLink: (params) =>
+        executeTelegramRequest("editChatSubscriptionInviteLink", params, config),
+      revokeChatInviteLink: (params) => executeTelegramRequest("revokeChatInviteLink", params, config),
+      approveChatJoinRequest: (params) => executeTelegramRequest("approveChatJoinRequest", params, config),
+      declineChatJoinRequest: (params) => executeTelegramRequest("declineChatJoinRequest", params, config),
+      setChatPhoto: (params) => executeTelegramRequest("setChatPhoto", params, config),
+      deleteChatPhoto: (params) => executeTelegramRequest("deleteChatPhoto", params, config),
+      setChatTitle: (params) => executeTelegramRequest("setChatTitle", params, config),
+      setChatDescription: (params) => executeTelegramRequest("setChatDescription", params, config),
+      pinChatMessage: (params) => executeTelegramRequest("pinChatMessage", params, config),
+      unpinChatMessage: (params) => executeTelegramRequest("unpinChatMessage", params, config),
+      unpinAllChatMessages: (params) => executeTelegramRequest("unpinAllChatMessages", params, config),
+      leaveChat: (params) => executeTelegramRequest("leaveChat", params, config),
+      getChat: (params) => executeTelegramRequest("getChat", params, config),
+      getChatAdministrators: (params) => executeTelegramRequest("getChatAdministrators", params, config),
+      getChatMemberCount: (params) => executeTelegramRequest("getChatMemberCount", params, config),
+      getChatMember: (params) => executeTelegramRequest("getChatMember", params, config),
+      setChatStickerSet: (params) => executeTelegramRequest("setChatStickerSet", params, config),
+      deleteChatStickerSet: (params) => executeTelegramRequest("deleteChatStickerSet", params, config),
+      getForumTopicIconStickers: () => executeTelegramRequest("getForumTopicIconStickers", {}, config),
+      createForumTopic: (params) => executeTelegramRequest("createForumTopic", params, config),
+      editForumTopic: (params) => executeTelegramRequest("editForumTopic", params, config),
+      closeForumTopic: (params) => executeTelegramRequest("closeForumTopic", params, config),
+      reopenForumTopic: (params) => executeTelegramRequest("reopenForumTopic", params, config),
+      deleteForumTopic: (params) => executeTelegramRequest("deleteForumTopic", params, config),
+      unpinAllForumTopicMessages: (params) => executeTelegramRequest("unpinAllForumTopicMessages", params, config),
+      editGeneralForumTopic: (params) => executeTelegramRequest("editGeneralForumTopic", params, config),
+      closeGeneralForumTopic: (params) => executeTelegramRequest("closeGeneralForumTopic", params, config),
+      reopenGeneralForumTopic: (params) => executeTelegramRequest("reopenGeneralForumTopic", params, config),
+      hideGeneralForumTopic: (params) => executeTelegramRequest("hideGeneralForumTopic", params, config),
+      unhideGeneralForumTopic: (params) => executeTelegramRequest("unhideGeneralForumTopic", params, config),
+      unpinAllGeneralForumTopicMessages: (params) =>
+        executeTelegramRequest("unpinAllGeneralForumTopicMessages", params, config),
+      answerCallbackQuery: (params) => executeTelegramRequest("answerCallbackQuery", params, config),
+      getUserChatBoosts: (params) => executeTelegramRequest("getUserChatBoosts", params, config),
+      getBusinessConnection: (params) => executeTelegramRequest("getBusinessConnection", params, config),
+      setMyCommands: (params) => executeTelegramRequest("setMyCommands", params, config),
+      deleteMyCommands: (params) => executeTelegramRequest("deleteMyCommands", params, config),
+      getMyCommands: (params) => executeTelegramRequest("getMyCommands", params, config),
+      setMyName: (params) => executeTelegramRequest("setMyName", params, config),
+      getMyName: (params) => executeTelegramRequest("getMyName", params, config),
+      setMyDescription: (params) => executeTelegramRequest("setMyDescription", params, config),
+      getMyDescription: (params) => executeTelegramRequest("getMyDescription", params, config),
+      setMyShortDescription: (params) => executeTelegramRequest("setMyShortDescription", params, config),
+      getMyShortDescription: (params) => executeTelegramRequest("getMyShortDescription", params, config),
+      setChatMenuButton: (params) => executeTelegramRequest("setChatMenuButton", params, config),
+      getChatMenuButton: (params) => executeTelegramRequest("getChatMenuButton", params, config),
+      setMyDefaultAdministratorRights: (params) =>
+        executeTelegramRequest("setMyDefaultAdministratorRights", params, config),
+      getMyDefaultAdministratorRights: (params) =>
+        executeTelegramRequest("getMyDefaultAdministratorRights", params, config),
+      getAvailableGifts: () => executeTelegramRequest("getAvailableGifts", {}, config),
+      sendGift: (params) => executeTelegramRequest("sendGift", params, config),
+      giftPremiumSubscription: (params) => executeTelegramRequest("giftPremiumSubscription", params, config),
+      verifyUser: (params) => executeTelegramRequest("verifyUser", params, config),
+      verifyChat: (params) => executeTelegramRequest("verifyChat", params, config),
+      removeUserVerification: () => executeTelegramRequest("removeUserVerification", {}, config),
+      removeChatVerification: () => executeTelegramRequest("removeChatVerification", {}, config),
+      readBusinessMessage: (params) => executeTelegramRequest("readBusinessMessage", params, config),
+      deleteBusinessMessages: (params) => executeTelegramRequest("deleteBusinessMessages", params, config),
+      setBusinessAccountName: (params) => executeTelegramRequest("setBusinessAccountName", params, config),
+      setBusinessAccountUsername: (params) => executeTelegramRequest("setBusinessAccountUsername", params, config),
+      setBusinessAccountBio: (params) => executeTelegramRequest("setBusinessAccountBio", params, config),
+      setBusinessAccountProfilePhoto: (params) =>
+        executeTelegramRequest("setBusinessAccountProfilePhoto", params, config),
+      removeBusinessAccountProfilePhoto: () => executeTelegramRequest("removeBusinessAccountProfilePhoto", {}, config),
+      setBusinessAccountGiftSettings: (params) =>
+        executeTelegramRequest("setBusinessAccountGiftSettings", params, config),
+      getBusinessAccountStarBalance: () => executeTelegramRequest("getBusinessAccountStarBalance", {}, config),
+      transferBusinessAccountStars: (params) => executeTelegramRequest("transferBusinessAccountStars", params, config),
+      getBusinessAccountGifts: () => executeTelegramRequest("getBusinessAccountGifts", {}, config),
+      convertGiftToStars: (params) => executeTelegramRequest("convertGiftToStars", params, config),
+      upgradeGift: (params) => executeTelegramRequest("upgradeGift", params, config),
+      transferGift: (params) => executeTelegramRequest("transferGift", params, config),
+      postStory: (params) => executeTelegramRequest("postStory", params, config),
+      editStory: (params) => executeTelegramRequest("editStory", params, config),
+      deleteStory: (params) => executeTelegramRequest("deleteStory", params, config),
+
+      // Updating messages
+      editMessageText: (params) => executeTelegramRequest("editMessageText", params, config),
+      editMessageCaption: (params) => executeTelegramRequest("editMessageCaption", params, config),
+      editMessageMedia: (params) => executeTelegramRequest("editMessageMedia", params, config),
+      editMessageLiveLocation: (params) => executeTelegramRequest("editMessageLiveLocation", params, config),
+      stopMessageLiveLocation: (params) => executeTelegramRequest("stopMessageLiveLocation", params, config),
+      editMessageChecklist: (params) => executeTelegramRequest("editMessageChecklist", params, config),
+      editMessageReplyMarkup: (params) => executeTelegramRequest("editMessageReplyMarkup", params, config),
+      stopPoll: (params) => executeTelegramRequest("stopPoll", params, config),
+      approveSuggestedPost: (params) => executeTelegramRequest("approveSuggestedPost", params, config),
+      declineSuggestedPost: (params) => executeTelegramRequest("declineSuggestedPost", params, config),
+      deleteMessage: (params) => executeTelegramRequest("deleteMessage", params, config),
+      deleteMessages: (params) => executeTelegramRequest("deleteMessages", params, config),
+
+      // Stickers
+      sendSticker: (params) => executeTelegramRequest("sendSticker", params, config),
+      getStickerSet: (params) => executeTelegramRequest("getStickerSet", params, config),
+      getCustomEmojiStickers: (params) => executeTelegramRequest("getCustomEmojiStickers", params, config),
+      uploadStickerFile: (params) => executeTelegramRequest("uploadStickerFile", params, config),
+      createNewStickerSet: (params) => executeTelegramRequest("createNewStickerSet", params, config),
+      addStickerToSet: (params) => executeTelegramRequest("addStickerToSet", params, config),
+      setStickerPositionInSet: (params) => executeTelegramRequest("setStickerPositionInSet", params, config),
+      deleteStickerFromSet: (params) => executeTelegramRequest("deleteStickerFromSet", params, config),
+      replaceStickerInSet: (params) => executeTelegramRequest("replaceStickerInSet", params, config),
+      setStickerEmojiList: (params) => executeTelegramRequest("setStickerEmojiList", params, config),
+      setStickerKeywords: (params) => executeTelegramRequest("setStickerKeywords", params, config),
+      setStickerMaskPosition: (params) => executeTelegramRequest("setStickerMaskPosition", params, config),
+      setStickerSetTitle: (params) => executeTelegramRequest("setStickerSetTitle", params, config),
+      setStickerSetThumbnail: (params) => executeTelegramRequest("setStickerSetThumbnail", params, config),
+      setCustomEmojiStickerSetThumbnail: (params) =>
+        executeTelegramRequest("setCustomEmojiStickerSetThumbnail", params, config),
+      deleteStickerSet: (params) => executeTelegramRequest("deleteStickerSet", params, config),
+
+      // Inline mode
+      answerInlineQuery: (params) => executeTelegramRequest("answerInlineQuery", params, config),
+      answerWebAppQuery: (params) => executeTelegramRequest("answerWebAppQuery", params, config),
+      savePreparedInlineMessage: (params) => executeTelegramRequest("savePreparedInlineMessage", params, config),
+
+      // Payments
+      sendInvoice: (params) => executeTelegramRequest("sendInvoice", params, config),
+      createInvoiceLink: (params) => executeTelegramRequest("createInvoiceLink", params, config),
+      answerShippingQuery: (params) => executeTelegramRequest("answerShippingQuery", params, config),
+      answerPreCheckoutQuery: (params) => executeTelegramRequest("answerPreCheckoutQuery", params, config),
+      getMyStarBalance: () => executeTelegramRequest("getMyStarBalance", {}, config),
+      getStarTransactions: (params) => executeTelegramRequest("getStarTransactions", params, config),
+      refundStarPayment: (params) => executeTelegramRequest("refundStarPayment", params, config),
+      editUserStarSubscription: (params) => executeTelegramRequest("editUserStarSubscription", params, config),
+
+      // Telegram Passport
+      setPassportDataErrors: (params) => executeTelegramRequest("setPassportDataErrors", params, config),
+
+      // Games
+      sendGame: (params) => executeTelegramRequest("sendGame", params, config),
+      setGameScore: (params) => executeTelegramRequest("setGameScore", params, config),
+      getGameHighScores: (params) => executeTelegramRequest("getGameHighScores", params, config)
+    })
+  })
+)
 
 // =============================================================================
 // Configuration Layer
 // =============================================================================
 
 /**
+ * Configuration for the Telegram Bot API Service
+ */
+export interface TelegramBotApiConfig {
+  readonly apiBaseUrl: string
+  readonly rateLimitDelay: number
+  readonly retryAttempts: number
+  readonly retryDelay: number
+  readonly timeout: number
+  readonly token: Redacted.Redacted
+}
+
+export class TelegramBotApiConfigContext extends Context.Tag(
+  "@services/TelegramBotApiConfig"
+)<TelegramBotApiConfigContext, TelegramBotApiConfig>() {}
+
+/**
  * Configuration layer that loads settings from environment variables
  */
-export const TelegramBotApiConfigLive: Layer.Layer<
+export const TelegramBotApiConfigLive = Layer.effect(
   TelegramBotApiConfigContext,
-  Config.ConfigError
-> = Layer.effect(
-  TelegramBotApiConfigContext,
-  Effect.gen(function* () {
-    const token = yield* Config.secret("TELEGRAM_BOT_TOKEN")
+  Effect.gen(function*() {
     const apiBaseUrl = yield* Config.withDefault(
       Config.string("TELEGRAM_API_BASE_URL"),
       "https://api.telegram.org/bot"
     )
-    const timeout = yield* Config.withDefault(
-      Config.number("TELEGRAM_REQUEST_TIMEOUT"),
-      30000
+    const rateLimitDelay = yield* Config.withDefault(
+      Config.number("TELEGRAM_RATE_LIMIT_DELAY"),
+      1000
     )
     const retryAttempts = yield* Config.withDefault(
       Config.number("TELEGRAM_RETRY_ATTEMPTS"),
@@ -8836,22 +8379,24 @@ export const TelegramBotApiConfigLive: Layer.Layer<
       Config.number("TELEGRAM_RETRY_DELAY"),
       1000
     )
-    const rateLimitDelay = yield* Config.withDefault(
-      Config.number("TELEGRAM_RATE_LIMIT_DELAY"),
-      1000
+    const timeout = yield* Config.withDefault(
+      Config.number("TELEGRAM_REQUEST_TIMEOUT"),
+      30000
     )
-    // Validate that the token is not empty
-    if (Secret.value(token) === "") {
-      throw new Error("TELEGRAM_BOT_TOKEN must not be empty")
-    }
+    const token = yield* Config.redacted("TELEGRAM_BOT_TOKEN").pipe(
+      Effect.filterOrFail(
+        (token) => Redacted.value(token) !== "",
+        () => new Error("TELEGRAM_BOT_TOKEN must not be empty")
+      )
+    )
 
     return {
-      token,
       apiBaseUrl,
-      timeout,
+      rateLimitDelay,
       retryAttempts,
       retryDelay,
-      rateLimitDelay,
+      timeout,
+      token
     }
   })
 )
@@ -8984,8 +8529,8 @@ const handleTelegramResponse = <T>(
       catch: (error) =>
         new TelegramBotApiInvalidResponseError({
           message: `Failed to parse response JSON: ${String(error)}`,
-          cause: error,
-        }),
+          cause: error
+        })
     }),
     Effect.flatMap((json) => {
       if (
@@ -9019,25 +8564,24 @@ const handleTelegramResponse = <T>(
         } else if (errorCode === "401" || errorCode === "403") {
           return Effect.fail(
             new TelegramBotApiUnauthorizedError({
-              message: `Unauthorized: ${message}`,
+              message: `Unauthorized: ${message}`
             })
           )
         } else if (errorCode === "429") {
-          const retryAfter =
-            json.parameters && "retry_after" in json.parameters
-              ? ((json.parameters as any).retry_after as number)
-              : undefined
+          const retryAfter = json.parameters && "retry_after" in json.parameters
+            ? ((json.parameters as any).retry_after as number)
+            : undefined
           return Effect.fail(
             new TelegramBotApiRateLimitError({
               message: `Rate limited: ${message}`,
-              retryAfter,
+              retryAfter
             })
           )
         } else {
           return Effect.fail(
             new TelegramBotApiMethodError({
               message,
-              method: (json.parameters?.method as string) || "unknown",
+              method: (json.parameters?.method as string) || "unknown"
             })
           )
         }
@@ -9046,7 +8590,7 @@ const handleTelegramResponse = <T>(
         return Effect.fail(
           new TelegramBotApiInvalidResponseError({
             message: `Invalid response format: ${JSON.stringify(json)}`,
-            response: json,
+            response: json
           })
         )
       }
@@ -9057,7 +8601,7 @@ const handleTelegramResponse = <T>(
       }
       return Effect.fail(
         new TelegramBotApiError({
-          message: `Unexpected error processing response: ${String(error)}`,
+          message: `Unexpected error processing response: ${String(error)}`
         })
       )
     })
@@ -9084,8 +8628,8 @@ const executeTelegramRequest = <T>(
       catch: (error) =>
         new TelegramBotApiNetworkError({
           message: `Network error: ${String(error)}`,
-          cause: error,
-        }),
+          cause: error
+        })
     }),
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
@@ -9104,7 +8648,7 @@ const executeTelegramRequest = <T>(
           error._tag === "TelegramBotApiNetworkError" ||
           error._tag === "TelegramBotApiRateLimitError"
         )
-      },
+      }
     }),
     Effect.catchAll((error) => {
       if (error._tag === "TelegramBotApiError") {
@@ -9112,7 +8656,7 @@ const executeTelegramRequest = <T>(
       }
       return Effect.fail(
         new TelegramBotApiError({
-          message: `Unexpected error: ${String(error)}`,
+          message: `Unexpected error: ${String(error)}`
         })
       )
     })
@@ -9129,99 +8673,61 @@ const executeTelegramRequest = <T>(
 export class TelegramBotApiServiceImpl extends Effect.Service<TelegramBotApiServiceContext>()(
   "TelegramBotApiService",
   () => ({
-    create: Effect.gen(function* () {
+    create: Effect.gen(function*() {
       const config = yield* TelegramBotApiConfigContext
 
       return TelegramBotApiService.of({
         // Getting updates
-        getUpdates: (params) =>
-          executeTelegramRequest("getUpdates", params, config),
-        setWebhook: (params) =>
-          executeTelegramRequest("setWebhook", params, config),
-        deleteWebhook: (params) =>
-          executeTelegramRequest("deleteWebhook", params, config),
-        getWebhookInfo: () =>
-          executeTelegramRequest("getWebhookInfo", {}, config),
+        getUpdates: (params) => executeTelegramRequest("getUpdates", params, config),
+        setWebhook: (params) => executeTelegramRequest("setWebhook", params, config),
+        deleteWebhook: (params) => executeTelegramRequest("deleteWebhook", params, config),
+        getWebhookInfo: () => executeTelegramRequest("getWebhookInfo", {}, config),
 
         // Available methods
         getMe: () => executeTelegramRequest("getMe", {}, config),
         logOut: () => executeTelegramRequest("logOut", {}, config),
         close: () => executeTelegramRequest("close", {}, config),
-        sendMessage: (params) =>
-          executeTelegramRequest("sendMessage", params, config),
-        forwardMessage: (params) =>
-          executeTelegramRequest("forwardMessage", params, config),
-        forwardMessages: (params) =>
-          executeTelegramRequest("forwardMessages", params, config),
-        copyMessage: (params) =>
-          executeTelegramRequest("copyMessage", params, config),
-        copyMessages: (params) =>
-          executeTelegramRequest("copyMessages", params, config),
-        sendPhoto: (params) =>
-          executeTelegramRequest("sendPhoto", params, config),
-        sendAudio: (params) =>
-          executeTelegramRequest("sendAudio", params, config),
-        sendDocument: (params) =>
-          executeTelegramRequest("sendDocument", params, config),
-        sendVideo: (params) =>
-          executeTelegramRequest("sendVideo", params, config),
-        sendAnimation: (params) =>
-          executeTelegramRequest("sendAnimation", params, config),
-        sendVoice: (params) =>
-          executeTelegramRequest("sendVoice", params, config),
-        sendVideoNote: (params) =>
-          executeTelegramRequest("sendVideoNote", params, config),
-        sendPaidMedia: (params) =>
-          executeTelegramRequest("sendPaidMedia", params, config),
-        sendMediaGroup: (params) =>
-          executeTelegramRequest("sendMediaGroup", params, config),
-        sendLocation: (params) =>
-          executeTelegramRequest("sendLocation", params, config),
-        sendVenue: (params) =>
-          executeTelegramRequest("sendVenue", params, config),
-        sendContact: (params) =>
-          executeTelegramRequest("sendContact", params, config),
-        sendPoll: (params) =>
-          executeTelegramRequest("sendPoll", params, config),
-        sendChecklist: (params) =>
-          executeTelegramRequest("sendChecklist", params, config),
-        sendDice: (params) =>
-          executeTelegramRequest("sendDice", params, config),
-        sendChatAction: (params) =>
-          executeTelegramRequest("sendChatAction", params, config),
-        setMessageReaction: (params) =>
-          executeTelegramRequest("setMessageReaction", params, config),
-        getUserProfilePhotos: (params) =>
-          executeTelegramRequest("getUserProfilePhotos", params, config),
-        setUserEmojiStatus: (params) =>
-          executeTelegramRequest("setUserEmojiStatus", params, config),
+        sendMessage: (params) => executeTelegramRequest("sendMessage", params, config),
+        forwardMessage: (params) => executeTelegramRequest("forwardMessage", params, config),
+        forwardMessages: (params) => executeTelegramRequest("forwardMessages", params, config),
+        copyMessage: (params) => executeTelegramRequest("copyMessage", params, config),
+        copyMessages: (params) => executeTelegramRequest("copyMessages", params, config),
+        sendPhoto: (params) => executeTelegramRequest("sendPhoto", params, config),
+        sendAudio: (params) => executeTelegramRequest("sendAudio", params, config),
+        sendDocument: (params) => executeTelegramRequest("sendDocument", params, config),
+        sendVideo: (params) => executeTelegramRequest("sendVideo", params, config),
+        sendAnimation: (params) => executeTelegramRequest("sendAnimation", params, config),
+        sendVoice: (params) => executeTelegramRequest("sendVoice", params, config),
+        sendVideoNote: (params) => executeTelegramRequest("sendVideoNote", params, config),
+        sendPaidMedia: (params) => executeTelegramRequest("sendPaidMedia", params, config),
+        sendMediaGroup: (params) => executeTelegramRequest("sendMediaGroup", params, config),
+        sendLocation: (params) => executeTelegramRequest("sendLocation", params, config),
+        sendVenue: (params) => executeTelegramRequest("sendVenue", params, config),
+        sendContact: (params) => executeTelegramRequest("sendContact", params, config),
+        sendPoll: (params) => executeTelegramRequest("sendPoll", params, config),
+        sendChecklist: (params) => executeTelegramRequest("sendChecklist", params, config),
+        sendDice: (params) => executeTelegramRequest("sendDice", params, config),
+        sendChatAction: (params) => executeTelegramRequest("sendChatAction", params, config),
+        setMessageReaction: (params) => executeTelegramRequest("setMessageReaction", params, config),
+        getUserProfilePhotos: (params) => executeTelegramRequest("getUserProfilePhotos", params, config),
+        setUserEmojiStatus: (params) => executeTelegramRequest("setUserEmojiStatus", params, config),
         getFile: (params) => executeTelegramRequest("getFile", params, config),
-        banChatMember: (params) =>
-          executeTelegramRequest("banChatMember", params, config),
-        unbanChatMember: (params) =>
-          executeTelegramRequest("unbanChatMember", params, config),
-        restrictChatMember: (params) =>
-          executeTelegramRequest("restrictChatMember", params, config),
-        promoteChatMember: (params) =>
-          executeTelegramRequest("promoteChatMember", params, config),
+        banChatMember: (params) => executeTelegramRequest("banChatMember", params, config),
+        unbanChatMember: (params) => executeTelegramRequest("unbanChatMember", params, config),
+        restrictChatMember: (params) => executeTelegramRequest("restrictChatMember", params, config),
+        promoteChatMember: (params) => executeTelegramRequest("promoteChatMember", params, config),
         setChatAdministratorCustomTitle: (params) =>
           executeTelegramRequest(
             "setChatAdministratorCustomTitle",
             params,
             config
           ),
-        banChatSenderChat: (params) =>
-          executeTelegramRequest("banChatSenderChat", params, config),
-        unbanChatSenderChat: (params) =>
-          executeTelegramRequest("unbanChatSenderChat", params, config),
-        setChatPermissions: (params) =>
-          executeTelegramRequest("setChatPermissions", params, config),
-        exportChatInviteLink: (params) =>
-          executeTelegramRequest("exportChatInviteLink", params, config),
-        createChatInviteLink: (params) =>
-          executeTelegramRequest("createChatInviteLink", params, config),
-        editChatInviteLink: (params) =>
-          executeTelegramRequest("editChatInviteLink", params, config),
+        banChatSenderChat: (params) => executeTelegramRequest("banChatSenderChat", params, config),
+        unbanChatSenderChat: (params) => executeTelegramRequest("unbanChatSenderChat", params, config),
+        setChatPermissions: (params) => executeTelegramRequest("setChatPermissions", params, config),
+        exportChatInviteLink: (params) => executeTelegramRequest("exportChatInviteLink", params, config),
+        createChatInviteLink: (params) => executeTelegramRequest("createChatInviteLink", params, config),
+        editChatInviteLink: (params) => executeTelegramRequest("editChatInviteLink", params, config),
         createChatSubscriptionInviteLink: (params) =>
           executeTelegramRequest(
             "createChatSubscriptionInviteLink",
@@ -9234,97 +8740,55 @@ export class TelegramBotApiServiceImpl extends Effect.Service<TelegramBotApiServ
             params,
             config
           ),
-        revokeChatInviteLink: (params) =>
-          executeTelegramRequest("revokeChatInviteLink", params, config),
-        approveChatJoinRequest: (params) =>
-          executeTelegramRequest("approveChatJoinRequest", params, config),
-        declineChatJoinRequest: (params) =>
-          executeTelegramRequest("declineChatJoinRequest", params, config),
-        setChatPhoto: (params) =>
-          executeTelegramRequest("setChatPhoto", params, config),
-        deleteChatPhoto: (params) =>
-          executeTelegramRequest("deleteChatPhoto", params, config),
-        setChatTitle: (params) =>
-          executeTelegramRequest("setChatTitle", params, config),
-        setChatDescription: (params) =>
-          executeTelegramRequest("setChatDescription", params, config),
-        pinChatMessage: (params) =>
-          executeTelegramRequest("pinChatMessage", params, config),
-        unpinChatMessage: (params) =>
-          executeTelegramRequest("unpinChatMessage", params, config),
-        unpinAllChatMessages: (params) =>
-          executeTelegramRequest("unpinAllChatMessages", params, config),
-        leaveChat: (params) =>
-          executeTelegramRequest("leaveChat", params, config),
+        revokeChatInviteLink: (params) => executeTelegramRequest("revokeChatInviteLink", params, config),
+        approveChatJoinRequest: (params) => executeTelegramRequest("approveChatJoinRequest", params, config),
+        declineChatJoinRequest: (params) => executeTelegramRequest("declineChatJoinRequest", params, config),
+        setChatPhoto: (params) => executeTelegramRequest("setChatPhoto", params, config),
+        deleteChatPhoto: (params) => executeTelegramRequest("deleteChatPhoto", params, config),
+        setChatTitle: (params) => executeTelegramRequest("setChatTitle", params, config),
+        setChatDescription: (params) => executeTelegramRequest("setChatDescription", params, config),
+        pinChatMessage: (params) => executeTelegramRequest("pinChatMessage", params, config),
+        unpinChatMessage: (params) => executeTelegramRequest("unpinChatMessage", params, config),
+        unpinAllChatMessages: (params) => executeTelegramRequest("unpinAllChatMessages", params, config),
+        leaveChat: (params) => executeTelegramRequest("leaveChat", params, config),
         getChat: (params) => executeTelegramRequest("getChat", params, config),
-        getChatAdministrators: (params) =>
-          executeTelegramRequest("getChatAdministrators", params, config),
-        getChatMemberCount: (params) =>
-          executeTelegramRequest("getChatMemberCount", params, config),
-        getChatMember: (params) =>
-          executeTelegramRequest("getChatMember", params, config),
-        setChatStickerSet: (params) =>
-          executeTelegramRequest("setChatStickerSet", params, config),
-        deleteChatStickerSet: (params) =>
-          executeTelegramRequest("deleteChatStickerSet", params, config),
-        getForumTopicIconStickers: () =>
-          executeTelegramRequest("getForumTopicIconStickers", {}, config),
-        createForumTopic: (params) =>
-          executeTelegramRequest("createForumTopic", params, config),
-        editForumTopic: (params) =>
-          executeTelegramRequest("editForumTopic", params, config),
-        closeForumTopic: (params) =>
-          executeTelegramRequest("closeForumTopic", params, config),
-        reopenForumTopic: (params) =>
-          executeTelegramRequest("reopenForumTopic", params, config),
-        deleteForumTopic: (params) =>
-          executeTelegramRequest("deleteForumTopic", params, config),
-        unpinAllForumTopicMessages: (params) =>
-          executeTelegramRequest("unpinAllForumTopicMessages", params, config),
-        editGeneralForumTopic: (params) =>
-          executeTelegramRequest("editGeneralForumTopic", params, config),
-        closeGeneralForumTopic: (params) =>
-          executeTelegramRequest("closeGeneralForumTopic", params, config),
-        reopenGeneralForumTopic: (params) =>
-          executeTelegramRequest("reopenGeneralForumTopic", params, config),
-        hideGeneralForumTopic: (params) =>
-          executeTelegramRequest("hideGeneralForumTopic", params, config),
-        unhideGeneralForumTopic: (params) =>
-          executeTelegramRequest("unhideGeneralForumTopic", params, config),
+        getChatAdministrators: (params) => executeTelegramRequest("getChatAdministrators", params, config),
+        getChatMemberCount: (params) => executeTelegramRequest("getChatMemberCount", params, config),
+        getChatMember: (params) => executeTelegramRequest("getChatMember", params, config),
+        setChatStickerSet: (params) => executeTelegramRequest("setChatStickerSet", params, config),
+        deleteChatStickerSet: (params) => executeTelegramRequest("deleteChatStickerSet", params, config),
+        getForumTopicIconStickers: () => executeTelegramRequest("getForumTopicIconStickers", {}, config),
+        createForumTopic: (params) => executeTelegramRequest("createForumTopic", params, config),
+        editForumTopic: (params) => executeTelegramRequest("editForumTopic", params, config),
+        closeForumTopic: (params) => executeTelegramRequest("closeForumTopic", params, config),
+        reopenForumTopic: (params) => executeTelegramRequest("reopenForumTopic", params, config),
+        deleteForumTopic: (params) => executeTelegramRequest("deleteForumTopic", params, config),
+        unpinAllForumTopicMessages: (params) => executeTelegramRequest("unpinAllForumTopicMessages", params, config),
+        editGeneralForumTopic: (params) => executeTelegramRequest("editGeneralForumTopic", params, config),
+        closeGeneralForumTopic: (params) => executeTelegramRequest("closeGeneralForumTopic", params, config),
+        reopenGeneralForumTopic: (params) => executeTelegramRequest("reopenGeneralForumTopic", params, config),
+        hideGeneralForumTopic: (params) => executeTelegramRequest("hideGeneralForumTopic", params, config),
+        unhideGeneralForumTopic: (params) => executeTelegramRequest("unhideGeneralForumTopic", params, config),
         unpinAllGeneralForumTopicMessages: (params) =>
           executeTelegramRequest(
             "unpinAllGeneralForumTopicMessages",
             params,
             config
           ),
-        answerCallbackQuery: (params) =>
-          executeTelegramRequest("answerCallbackQuery", params, config),
-        getUserChatBoosts: (params) =>
-          executeTelegramRequest("getUserChatBoosts", params, config),
-        getBusinessConnection: (params) =>
-          executeTelegramRequest("getBusinessConnection", params, config),
-        setMyCommands: (params) =>
-          executeTelegramRequest("setMyCommands", params, config),
-        deleteMyCommands: (params) =>
-          executeTelegramRequest("deleteMyCommands", params, config),
-        getMyCommands: (params) =>
-          executeTelegramRequest("getMyCommands", params, config),
-        setMyName: (params) =>
-          executeTelegramRequest("setMyName", params, config),
-        getMyName: (params) =>
-          executeTelegramRequest("getMyName", params, config),
-        setMyDescription: (params) =>
-          executeTelegramRequest("setMyDescription", params, config),
-        getMyDescription: (params) =>
-          executeTelegramRequest("getMyDescription", params, config),
-        setMyShortDescription: (params) =>
-          executeTelegramRequest("setMyShortDescription", params, config),
-        getMyShortDescription: (params) =>
-          executeTelegramRequest("getMyShortDescription", params, config),
-        setChatMenuButton: (params) =>
-          executeTelegramRequest("setChatMenuButton", params, config),
-        getChatMenuButton: (params) =>
-          executeTelegramRequest("getChatMenuButton", params, config),
+        answerCallbackQuery: (params) => executeTelegramRequest("answerCallbackQuery", params, config),
+        getUserChatBoosts: (params) => executeTelegramRequest("getUserChatBoosts", params, config),
+        getBusinessConnection: (params) => executeTelegramRequest("getBusinessConnection", params, config),
+        setMyCommands: (params) => executeTelegramRequest("setMyCommands", params, config),
+        deleteMyCommands: (params) => executeTelegramRequest("deleteMyCommands", params, config),
+        getMyCommands: (params) => executeTelegramRequest("getMyCommands", params, config),
+        setMyName: (params) => executeTelegramRequest("setMyName", params, config),
+        getMyName: (params) => executeTelegramRequest("getMyName", params, config),
+        setMyDescription: (params) => executeTelegramRequest("setMyDescription", params, config),
+        getMyDescription: (params) => executeTelegramRequest("getMyDescription", params, config),
+        setMyShortDescription: (params) => executeTelegramRequest("setMyShortDescription", params, config),
+        getMyShortDescription: (params) => executeTelegramRequest("getMyShortDescription", params, config),
+        setChatMenuButton: (params) => executeTelegramRequest("setChatMenuButton", params, config),
+        getChatMenuButton: (params) => executeTelegramRequest("getChatMenuButton", params, config),
         setMyDefaultAdministratorRights: (params) =>
           executeTelegramRequest(
             "setMyDefaultAdministratorRights",
@@ -9337,30 +8801,18 @@ export class TelegramBotApiServiceImpl extends Effect.Service<TelegramBotApiServ
             params,
             config
           ),
-        getAvailableGifts: () =>
-          executeTelegramRequest("getAvailableGifts", {}, config),
-        sendGift: (params) =>
-          executeTelegramRequest("sendGift", params, config),
-        giftPremiumSubscription: (params) =>
-          executeTelegramRequest("giftPremiumSubscription", params, config),
-        verifyUser: (params) =>
-          executeTelegramRequest("verifyUser", params, config),
-        verifyChat: (params) =>
-          executeTelegramRequest("verifyChat", params, config),
-        removeUserVerification: () =>
-          executeTelegramRequest("removeUserVerification", {}, config),
-        removeChatVerification: () =>
-          executeTelegramRequest("removeChatVerification", {}, config),
-        readBusinessMessage: (params) =>
-          executeTelegramRequest("readBusinessMessage", params, config),
-        deleteBusinessMessages: (params) =>
-          executeTelegramRequest("deleteBusinessMessages", params, config),
-        setBusinessAccountName: (params) =>
-          executeTelegramRequest("setBusinessAccountName", params, config),
-        setBusinessAccountUsername: (params) =>
-          executeTelegramRequest("setBusinessAccountUsername", params, config),
-        setBusinessAccountBio: (params) =>
-          executeTelegramRequest("setBusinessAccountBio", params, config),
+        getAvailableGifts: () => executeTelegramRequest("getAvailableGifts", {}, config),
+        sendGift: (params) => executeTelegramRequest("sendGift", params, config),
+        giftPremiumSubscription: (params) => executeTelegramRequest("giftPremiumSubscription", params, config),
+        verifyUser: (params) => executeTelegramRequest("verifyUser", params, config),
+        verifyChat: (params) => executeTelegramRequest("verifyChat", params, config),
+        removeUserVerification: () => executeTelegramRequest("removeUserVerification", {}, config),
+        removeChatVerification: () => executeTelegramRequest("removeChatVerification", {}, config),
+        readBusinessMessage: (params) => executeTelegramRequest("readBusinessMessage", params, config),
+        deleteBusinessMessages: (params) => executeTelegramRequest("deleteBusinessMessages", params, config),
+        setBusinessAccountName: (params) => executeTelegramRequest("setBusinessAccountName", params, config),
+        setBusinessAccountUsername: (params) => executeTelegramRequest("setBusinessAccountUsername", params, config),
+        setBusinessAccountBio: (params) => executeTelegramRequest("setBusinessAccountBio", params, config),
         setBusinessAccountProfilePhoto: (params) =>
           executeTelegramRequest(
             "setBusinessAccountProfilePhoto",
@@ -9379,140 +8831,81 @@ export class TelegramBotApiServiceImpl extends Effect.Service<TelegramBotApiServ
             params,
             config
           ),
-        getBusinessAccountStarBalance: () =>
-          executeTelegramRequest("getBusinessAccountStarBalance", {}, config),
+        getBusinessAccountStarBalance: () => executeTelegramRequest("getBusinessAccountStarBalance", {}, config),
         transferBusinessAccountStars: (params) =>
           executeTelegramRequest(
             "transferBusinessAccountStars",
             params,
             config
           ),
-        getBusinessAccountGifts: () =>
-          executeTelegramRequest("getBusinessAccountGifts", {}, config),
-        convertGiftToStars: (params) =>
-          executeTelegramRequest("convertGiftToStars", params, config),
-        upgradeGift: (params) =>
-          executeTelegramRequest("upgradeGift", params, config),
-        transferGift: (params) =>
-          executeTelegramRequest("transferGift", params, config),
-        postStory: (params) =>
-          executeTelegramRequest("postStory", params, config),
-        editStory: (params) =>
-          executeTelegramRequest("editStory", params, config),
-        deleteStory: (params) =>
-          executeTelegramRequest("deleteStory", params, config),
+        getBusinessAccountGifts: () => executeTelegramRequest("getBusinessAccountGifts", {}, config),
+        convertGiftToStars: (params) => executeTelegramRequest("convertGiftToStars", params, config),
+        upgradeGift: (params) => executeTelegramRequest("upgradeGift", params, config),
+        transferGift: (params) => executeTelegramRequest("transferGift", params, config),
+        postStory: (params) => executeTelegramRequest("postStory", params, config),
+        editStory: (params) => executeTelegramRequest("editStory", params, config),
+        deleteStory: (params) => executeTelegramRequest("deleteStory", params, config),
 
         // Updating messages
-        editMessageText: (params) =>
-          executeTelegramRequest("editMessageText", params, config),
-        editMessageCaption: (params) =>
-          executeTelegramRequest("editMessageCaption", params, config),
-        editMessageMedia: (params) =>
-          executeTelegramRequest("editMessageMedia", params, config),
-        editMessageLiveLocation: (params) =>
-          executeTelegramRequest("editMessageLiveLocation", params, config),
-        stopMessageLiveLocation: (params) =>
-          executeTelegramRequest("stopMessageLiveLocation", params, config),
-        editMessageChecklist: (params) =>
-          executeTelegramRequest("editMessageChecklist", params, config),
-        editMessageReplyMarkup: (params) =>
-          executeTelegramRequest("editMessageReplyMarkup", params, config),
-        stopPoll: (params) =>
-          executeTelegramRequest("stopPoll", params, config),
-        approveSuggestedPost: (params) =>
-          executeTelegramRequest("approveSuggestedPost", params, config),
-        declineSuggestedPost: (params) =>
-          executeTelegramRequest("declineSuggestedPost", params, config),
-        deleteMessage: (params) =>
-          executeTelegramRequest("deleteMessage", params, config),
-        deleteMessages: (params) =>
-          executeTelegramRequest("deleteMessages", params, config),
+        editMessageText: (params) => executeTelegramRequest("editMessageText", params, config),
+        editMessageCaption: (params) => executeTelegramRequest("editMessageCaption", params, config),
+        editMessageMedia: (params) => executeTelegramRequest("editMessageMedia", params, config),
+        editMessageLiveLocation: (params) => executeTelegramRequest("editMessageLiveLocation", params, config),
+        stopMessageLiveLocation: (params) => executeTelegramRequest("stopMessageLiveLocation", params, config),
+        editMessageChecklist: (params) => executeTelegramRequest("editMessageChecklist", params, config),
+        editMessageReplyMarkup: (params) => executeTelegramRequest("editMessageReplyMarkup", params, config),
+        stopPoll: (params) => executeTelegramRequest("stopPoll", params, config),
+        approveSuggestedPost: (params) => executeTelegramRequest("approveSuggestedPost", params, config),
+        declineSuggestedPost: (params) => executeTelegramRequest("declineSuggestedPost", params, config),
+        deleteMessage: (params) => executeTelegramRequest("deleteMessage", params, config),
+        deleteMessages: (params) => executeTelegramRequest("deleteMessages", params, config),
 
         // Stickers
-        sendSticker: (params) =>
-          executeTelegramRequest("sendSticker", params, config),
-        getStickerSet: (params) =>
-          executeTelegramRequest("getStickerSet", params, config),
-        getCustomEmojiStickers: (params) =>
-          executeTelegramRequest("getCustomEmojiStickers", params, config),
-        uploadStickerFile: (params) =>
-          executeTelegramRequest("uploadStickerFile", params, config),
-        createNewStickerSet: (params) =>
-          executeTelegramRequest("createNewStickerSet", params, config),
-        addStickerToSet: (params) =>
-          executeTelegramRequest("addStickerToSet", params, config),
-        setStickerPositionInSet: (params) =>
-          executeTelegramRequest("setStickerPositionInSet", params, config),
-        deleteStickerFromSet: (params) =>
-          executeTelegramRequest("deleteStickerFromSet", params, config),
-        replaceStickerInSet: (params) =>
-          executeTelegramRequest("replaceStickerInSet", params, config),
-        setStickerEmojiList: (params) =>
-          executeTelegramRequest("setStickerEmojiList", params, config),
-        setStickerKeywords: (params) =>
-          executeTelegramRequest("setStickerKeywords", params, config),
-        setStickerMaskPosition: (params) =>
-          executeTelegramRequest("setStickerMaskPosition", params, config),
-        setStickerSetTitle: (params) =>
-          executeTelegramRequest("setStickerSetTitle", params, config),
-        setStickerSetThumbnail: (params) =>
-          executeTelegramRequest("setStickerSetThumbnail", params, config),
+        sendSticker: (params) => executeTelegramRequest("sendSticker", params, config),
+        getStickerSet: (params) => executeTelegramRequest("getStickerSet", params, config),
+        getCustomEmojiStickers: (params) => executeTelegramRequest("getCustomEmojiStickers", params, config),
+        uploadStickerFile: (params) => executeTelegramRequest("uploadStickerFile", params, config),
+        createNewStickerSet: (params) => executeTelegramRequest("createNewStickerSet", params, config),
+        addStickerToSet: (params) => executeTelegramRequest("addStickerToSet", params, config),
+        setStickerPositionInSet: (params) => executeTelegramRequest("setStickerPositionInSet", params, config),
+        deleteStickerFromSet: (params) => executeTelegramRequest("deleteStickerFromSet", params, config),
+        replaceStickerInSet: (params) => executeTelegramRequest("replaceStickerInSet", params, config),
+        setStickerEmojiList: (params) => executeTelegramRequest("setStickerEmojiList", params, config),
+        setStickerKeywords: (params) => executeTelegramRequest("setStickerKeywords", params, config),
+        setStickerMaskPosition: (params) => executeTelegramRequest("setStickerMaskPosition", params, config),
+        setStickerSetTitle: (params) => executeTelegramRequest("setStickerSetTitle", params, config),
+        setStickerSetThumbnail: (params) => executeTelegramRequest("setStickerSetThumbnail", params, config),
         setCustomEmojiStickerSetThumbnail: (params) =>
           executeTelegramRequest(
             "setCustomEmojiStickerSetThumbnail",
             params,
             config
           ),
-        deleteStickerSet: (params) =>
-          executeTelegramRequest("deleteStickerSet", params, config),
+        deleteStickerSet: (params) => executeTelegramRequest("deleteStickerSet", params, config),
 
         // Inline mode
-        answerInlineQuery: (params) =>
-          executeTelegramRequest("answerInlineQuery", params, config),
-        answerWebAppQuery: (params) =>
-          executeTelegramRequest("answerWebAppQuery", params, config),
-        savePreparedInlineMessage: (params) =>
-          executeTelegramRequest("savePreparedInlineMessage", params, config),
+        answerInlineQuery: (params) => executeTelegramRequest("answerInlineQuery", params, config),
+        answerWebAppQuery: (params) => executeTelegramRequest("answerWebAppQuery", params, config),
+        savePreparedInlineMessage: (params) => executeTelegramRequest("savePreparedInlineMessage", params, config),
 
         // Payments
-        sendInvoice: (params) =>
-          executeTelegramRequest("sendInvoice", params, config),
-        createInvoiceLink: (params) =>
-          executeTelegramRequest("createInvoiceLink", params, config),
-        answerShippingQuery: (params) =>
-          executeTelegramRequest("answerShippingQuery", params, config),
-        answerPreCheckoutQuery: (params) =>
-          executeTelegramRequest("answerPreCheckoutQuery", params, config),
-        getMyStarBalance: () =>
-          executeTelegramRequest("getMyStarBalance", {}, config),
-        getStarTransactions: (params) =>
-          executeTelegramRequest("getStarTransactions", params, config),
-        refundStarPayment: (params) =>
-          executeTelegramRequest("refundStarPayment", params, config),
-        editUserStarSubscription: (params) =>
-          executeTelegramRequest("editUserStarSubscription", params, config),
+        sendInvoice: (params) => executeTelegramRequest("sendInvoice", params, config),
+        createInvoiceLink: (params) => executeTelegramRequest("createInvoiceLink", params, config),
+        answerShippingQuery: (params) => executeTelegramRequest("answerShippingQuery", params, config),
+        answerPreCheckoutQuery: (params) => executeTelegramRequest("answerPreCheckoutQuery", params, config),
+        getMyStarBalance: () => executeTelegramRequest("getMyStarBalance", {}, config),
+        getStarTransactions: (params) => executeTelegramRequest("getStarTransactions", params, config),
+        refundStarPayment: (params) => executeTelegramRequest("refundStarPayment", params, config),
+        editUserStarSubscription: (params) => executeTelegramRequest("editUserStarSubscription", params, config),
 
         // Telegram Passport
-        setPassportDataErrors: (params) =>
-          executeTelegramRequest("setPassportDataErrors", params, config),
+        setPassportDataErrors: (params) => executeTelegramRequest("setPassportDataErrors", params, config),
 
         // Games
-        sendGame: (params) =>
-          executeTelegramRequest("sendGame", params, config),
-        setGameScore: (params) =>
-          executeTelegramRequest("setGameScore", params, config),
-        getGameHighScores: (params) =>
-          executeTelegramRequest("getGameHighScores", params, config),
+        sendGame: (params) => executeTelegramRequest("sendGame", params, config),
+        setGameScore: (params) => executeTelegramRequest("setGameScore", params, config),
+        getGameHighScores: (params) => executeTelegramRequest("getGameHighScores", params, config)
       })
-    }),
+    })
   })
 ) {}
-
-/**
- * Live layer for the Telegram Bot API Service
- */
-export const TelegramBotApiServiceLive: Layer.Layer<
-  TelegramBotApiServiceContext,
-  never,
-  TelegramBotApiConfigContext
-> = TelegramBotApiServiceImpl
