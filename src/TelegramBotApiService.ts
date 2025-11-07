@@ -6,7 +6,8 @@
  * with proper type safety, error handling, and documentation.
  */
 
-import { HttpClient, HttpClientRequest, type HttpClientResponse } from "@effect/platform"
+import { FetchHttpClient, HttpClient, HttpClientRequest, type HttpClientResponse } from "@effect/platform"
+import type { ResponseError } from "@effect/platform/HttpClientError"
 import { Config, Context, Data, Effect, Layer, pipe, Redacted } from "effect"
 
 // =============================================================================
@@ -7800,17 +7801,19 @@ const buildFormData = (params: unknown): FormData => {
  */
 const handleTelegramResponse = <T>(
   response: HttpClientResponse.HttpClientResponse
-): Effect.Effect<T, TelegramBotApiError> => {
+): Effect.Effect<
+  T,
+  | ResponseError
+  | TelegramBotApiError
+  | TelegramBotApiInvalidResponseError
+  | TelegramBotApiMethodError
+  | TelegramBotApiRateLimitError
+  | TelegramBotApiUnauthorizedError,
+  never
+> => {
   return pipe(
-    Effect.tryPromise({
-      try: () => response.json(),
-      catch: (error) =>
-        new TelegramBotApiInvalidResponseError({
-          message: `Failed to parse response JSON: ${String(error)}`,
-          cause: error
-        })
-    }),
-    Effect.flatMap((json) => {
+    response.json,
+    Effect.andThen((json) => {
       if (
         typeof json === "object" &&
         json !== null &&
@@ -7818,7 +7821,7 @@ const handleTelegramResponse = <T>(
         json.ok
       ) {
         // Success response
-        return Effect.succeed(json.result as T)
+        return Effect.succeed((json as any).result as T)
       } else if (
         typeof json === "object" &&
         json !== null &&
@@ -7827,7 +7830,7 @@ const handleTelegramResponse = <T>(
         "description" in json
       ) {
         // Error response from Telegram API
-        const errorCode = json.error_code ? String(json.error_code) : undefined
+        const errorCode = (json as any).error_code ? String((json as any).error_code) : undefined
         const description = String(json.description)
         const message = errorCode ? `${errorCode}: ${description}` : description
 
@@ -7846,20 +7849,20 @@ const handleTelegramResponse = <T>(
             })
           )
         } else if (errorCode === "429") {
-          const retryAfter = json.parameters && "retry_after" in json.parameters
-            ? ((json.parameters as any).retry_after as number)
+          const retryAfter = (json as any).parameters && "retry_after" in (json as any).parameters
+            ? (((json as any).parameters as any).retry_after as number)
             : undefined
           return Effect.fail(
             new TelegramBotApiRateLimitError({
               message: `Rate limited: ${message}`,
-              retryAfter
+              ...retryAfter ? { retryAfter } : {}
             })
           )
         } else {
           return Effect.fail(
             new TelegramBotApiMethodError({
               message,
-              method: (json.parameters?.method as string) || "unknown"
+              method: ((json as any).parameters?.method as string) || "unknown"
             })
           )
         }
@@ -7872,16 +7875,6 @@ const handleTelegramResponse = <T>(
           })
         )
       }
-    }),
-    Effect.catchAll((error) => {
-      if (error._tag === "TelegramBotApiError") {
-        return Effect.fail(error)
-      }
-      return Effect.fail(
-        new TelegramBotApiError({
-          message: `Unexpected error processing response: ${String(error)}`
-        })
-      )
     })
   )
 }
@@ -7901,18 +7894,12 @@ const executeTelegramRequest = <T>(
   const request = makeTelegramRequest(method, params, config)
 
   return pipe(
-    Effect.tryPromise({
-      try: () => HttpClient.execute(request),
-      catch: (error) =>
-        new TelegramBotApiNetworkError({
-          message: `Network error: ${String(error)}`,
-          cause: error
-        })
-    }),
+    HttpClient.HttpClient,
+    Effect.flatMap((client) => client.execute(request)),
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
       times: config.retryAttempts,
-      delay: config.retryDelay,
+      // delay: config.retryDelay,
       until: (error) => {
         // Don't retry on unauthorized or method-specific errors
         if (
@@ -7923,21 +7910,21 @@ const executeTelegramRequest = <T>(
         }
         // Retry on network errors and rate limits
         return (
-          error._tag === "TelegramBotApiNetworkError" ||
+          // error._tag === "TelegramBotApiNetworkError" ||
           error._tag === "TelegramBotApiRateLimitError"
         )
       }
     }),
-    Effect.catchAll((error) => {
+    Effect.mapError((error) => {
       if (error._tag === "TelegramBotApiError") {
-        return Effect.fail(error)
+        return error
       }
-      return Effect.fail(
-        new TelegramBotApiError({
-          message: `Unexpected error: ${String(error)}`
-        })
-      )
+      return new TelegramBotApiError({
+        message: `Unexpected error: ${String(error)}`
+      })
     })
+  ).pipe(
+    Effect.provide(FetchHttpClient.layer)
   )
 }
 
