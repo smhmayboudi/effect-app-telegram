@@ -1,0 +1,65 @@
+import { Effect, Layer, pipe, Schedule } from "effect"
+import {
+  TelegramBotApiConfigLive,
+  TelegramBotApiServiceContext,
+  TelegramBotApiServiceLive
+} from "./TelegramBotApiService.js"
+
+// Application logic to handle incoming messages
+const handleUpdates = Effect.gen(function*() {
+  const telegramApi = yield* TelegramBotApiServiceContext
+  let offset = 0 // To track the latest update ID
+  // Infinite loop to continuously poll for updates
+  yield* Effect.forever(
+    Effect.gen(function*() {
+      // Get updates from the bot API
+      const updates = yield* telegramApi.getUpdates({
+        allowed_updates: ["message"], // Only get message updates
+        offset: offset + 1, // Start from the next update after the last one
+        timeout: 30 // Long polling timeout in seconds
+      })
+      // Process each update
+      for (const update of updates) {
+        yield* Effect.logInfo("Processing update:", update)
+        // Check if the update contains a message
+        if (update.message && update.message.from && update.message.text) {
+          const chatId = update.message.chat.id
+          const userId = update.message.from.id
+          const messageText = update.message.text
+          yield* Effect.logInfo(`Received message from user ${userId}: ${messageText}`)
+          // Send "hi" back to the user
+          const text = "hi"
+          yield* telegramApi.sendMessage({
+            chat_id: chatId,
+            reply_parameters: { message_id: update.message.message_id },
+            text
+          })
+          yield* Effect.logInfo(`Replied to user ${userId} with "${text}"`)
+        }
+        // Update offset to the latest processed update ID
+        if (update.update_id >= offset) {
+          offset = update.update_id
+        }
+      }
+    })
+  ).pipe(Effect.schedule(Schedule.spaced("1000 millis")))
+})
+
+// Define a layer that includes both the config and the Telegram Bot API service
+const TelegramBotAppLive = Layer.provide(
+  TelegramBotApiServiceLive,
+  TelegramBotApiConfigLive
+)
+
+// Main application
+pipe(
+  handleUpdates,
+  Effect.provide(TelegramBotAppLive),
+  Effect.catchAll((error) => {
+    console.error("Application error:", error)
+    return Effect.die(error)
+  }),
+  Effect.runPromise
+)
+
+console.log("Telegram Bot App started. Press Ctrl+C to stop.")
