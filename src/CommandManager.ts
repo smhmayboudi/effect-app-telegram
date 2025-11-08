@@ -1,9 +1,5 @@
 import { Context, Effect, Layer } from "effect"
-import {
-  type TelegramBotApiError,
-  type TelegramBotApiService,
-  TelegramBotApiServiceContext
-} from "./TelegramBotApiService.js"
+import { type TelegramBotApi, TelegramBotApiContext, type TelegramBotApiError } from "./TelegramBotApi.js"
 
 // =============================================================================
 // Command Registry
@@ -14,7 +10,7 @@ export type CommandHandler = (
   userId: number,
   messageText: string,
   args: Array<string>,
-  telegramApi: TelegramBotApiService
+  telegramBotApi: TelegramBotApi
 ) => Effect.Effect<void, TelegramBotApiError>
 
 export interface CommandManager {
@@ -33,7 +29,7 @@ export class CommandManagerContext extends Context.Tag(
 export const CommandManagerLive = Layer.effect(
   CommandManagerContext,
   Effect.gen(function*() {
-    const telegramApi = yield* TelegramBotApiServiceContext
+    const telegramBotApi = yield* TelegramBotApiContext
     const commands: Map<string, CommandHandler> = new Map()
 
     return CommandManagerContext.of({
@@ -41,19 +37,16 @@ export const CommandManagerLive = Layer.effect(
         if (!messageText.startsWith("/")) {
           return Effect.void
         }
-
         // Extract command and arguments
         const parts = messageText.trim().split(/\s+/)
         const command = parts[0].substring(1).toLowerCase() // Remove '/' and convert to lowercase
         const args = parts.slice(1) // Remaining parts are arguments
-
         const handler = commands.get(command)
-
         if (handler) {
-          return handler(chatId, userId, messageText, args, telegramApi)
+          return handler(chatId, userId, messageText, args, telegramBotApi)
         } else {
           // Command not found, send a default response
-          return telegramApi.sendMessage({
+          return telegramBotApi.sendMessage({
             chat_id: chatId,
             text: `Unknown command: /${command}. Use /help to see available commands.`
           })

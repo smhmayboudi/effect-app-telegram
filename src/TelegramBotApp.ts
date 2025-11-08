@@ -2,16 +2,12 @@ import { Effect, Layer, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import { helpCommandHandler, startCommandHandler } from "./CommandManagerApp.js"
-import {
-  TelegramBotApiConfigLive,
-  TelegramBotApiServiceContext,
-  TelegramBotApiServiceLive
-} from "./TelegramBotApiService.js"
+import { TelegramBotApiConfigLive, TelegramBotApiContext, TelegramBotApiLive } from "./TelegramBotApi.js"
 
 // Application logic to handle incoming messages
 const handleUpdates = Effect.gen(function*() {
   const commandManager = yield* CommandManagerContext
-  const telegramApi = yield* TelegramBotApiServiceContext
+  const telegramBotApi = yield* TelegramBotApiContext
   let offset = 0 // To track the latest update ID
 
   // Register built-in commands
@@ -22,7 +18,7 @@ const handleUpdates = Effect.gen(function*() {
   yield* Effect.forever(
     Effect.gen(function*() {
       // Get updates from the bot API
-      const updates = yield* telegramApi.getUpdates({
+      const updates = yield* telegramBotApi.getUpdates({
         allowed_updates: ["message"], // Only get message updates
         offset: offset + 1, // Start from the next update after the last one
         timeout: 30 // Long polling timeout in seconds
@@ -43,7 +39,7 @@ const handleUpdates = Effect.gen(function*() {
           } else {
             // Send "hi" back to the user for non-command messages
             const text = "hi"
-            yield* telegramApi.sendMessage({
+            yield* telegramBotApi.sendMessage({
               chat_id: chatId,
               reply_parameters: { message_id: update.message.message_id },
               text
@@ -62,7 +58,7 @@ const handleUpdates = Effect.gen(function*() {
 
 // Define a layer that includes both the config and the Telegram Bot API service
 const TelegramBotAppLive = Layer.provide(
-  TelegramBotApiServiceLive,
+  TelegramBotApiLive,
   TelegramBotApiConfigLive
 )
 

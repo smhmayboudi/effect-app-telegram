@@ -7936,7 +7936,7 @@ const executeTelegramRequest = <T>(
  * The Telegram Bot API Service interface
  * Defines all available methods in the Telegram Bot API
  */
-export interface TelegramBotApiService {
+export interface TelegramBotApi {
   // Getting updates
   getUpdates(params?: GetUpdatesParams): Effect.Effect<Array<Update>, TelegramBotApiError>
   setWebhook(params?: SetWebhookParams): Effect.Effect<true, TelegramBotApiError>
@@ -8134,20 +8134,20 @@ export interface TelegramBotApiService {
   getGameHighScores(params: GetGameHighScoresParams): Effect.Effect<Array<GameHighScore>, TelegramBotApiError>
 }
 
-export class TelegramBotApiServiceContext extends Context.Tag(
-  "@services/TelegramBotApiService"
-)<TelegramBotApiServiceContext, TelegramBotApiService>() {}
+export class TelegramBotApiContext extends Context.Tag(
+  "@context/TelegramBotApi"
+)<TelegramBotApiContext, TelegramBotApi>() {}
 
 /**
  * Live implementation of the Telegram Bot API Service
  */
 
-export const TelegramBotApiServiceLive = Layer.effect(
-  TelegramBotApiServiceContext,
+export const TelegramBotApiLive = Layer.effect(
+  TelegramBotApiContext,
   Effect.gen(function*() {
     const config = yield* TelegramBotApiConfigContext
 
-    return TelegramBotApiServiceContext.of({
+    return TelegramBotApiContext.of({
       // Getting updates
       getUpdates: (params) => executeTelegramRequest("getUpdates", params, config),
       setWebhook: (params) => executeTelegramRequest("setWebhook", params, config),
@@ -8351,7 +8351,7 @@ export interface TelegramBotApiConfig {
 }
 
 export class TelegramBotApiConfigContext extends Context.Tag(
-  "@services/TelegramBotApiConfig"
+  "@context/TelegramBotApiConfig"
 )<TelegramBotApiConfigContext, TelegramBotApiConfig>() {}
 
 /**
