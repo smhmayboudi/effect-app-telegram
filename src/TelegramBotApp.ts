@@ -1,7 +1,14 @@
 import { Effect, Layer, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
-import { audioCommandHandler, helpCommandHandler, startCommandHandler } from "./CommandManagerApp.js"
+import {
+  audioCommandHandler,
+  helpCommandHandler,
+  image1CommandHandler,
+  image2CommandHandler,
+  image3CommandHandler,
+  startCommandHandler
+} from "./CommandManagerApp.js"
 import { InputFileCacheLive } from "./InputFileCache.js"
 import { TelegramBotApiConfigLive, TelegramBotApiContext, TelegramBotApiLive } from "./TelegramBotApi.js"
 
@@ -15,6 +22,9 @@ const handleUpdates = Effect.gen(function*() {
   commandManager.register("audio", audioCommandHandler)
   commandManager.register("help", helpCommandHandler)
   commandManager.register("start", startCommandHandler)
+  commandManager.register("image1", image1CommandHandler)
+  commandManager.register("image2", image2CommandHandler)
+  commandManager.register("image3", image3CommandHandler)
 
   // Infinite loop to continuously poll for updates
   yield* Effect.forever(
