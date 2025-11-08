@@ -13,6 +13,12 @@ importers:
 
   .:
     dependencies:
+      '@effect/experimental':
+        specifier: latest
+        version: 0.57.0(@effect/platform@0.93.0(effect@3.19.2))(effect@3.19.2)
+      '@effect/platform':
+        specifier: latest
+        version: 0.93.0(effect@3.19.2)
       effect:
         specifier: ^3.17.7
         version: 3.19.2
@@ -44,9 +50,6 @@ importers:
       '@effect/language-service':
         specifier: latest
         version: 0.55.2
-      '@effect/platform':
-        specifier: latest
-        version: 0.93.0(effect@3.19.2)
       '@effect/vitest':
         specifier: latest
         version: 0.27.0(effect@3.19.2)(vitest@3.2.4(@types/node@22.19.0)(tsx@4.20.6))
@@ -273,6 +276,19 @@ packages:
 
   '@effect/eslint-plugin@0.3.2':
     resolution: {integrity: sha512-c4Vs9t3r54A4Zpl+wo8+PGzZz3JWYsip41H+UrebRLjQ2Hk/ap63IeCgN/HWcYtxtyhRopjp7gW9nOQ2Snbl+g==}
+
+  '@effect/experimental@0.57.0':
+    resolution: {integrity: sha512-usWsl3mvknRz1Wf2IelfwXoW0ftDycubCdAAGv2D8fdUMy4GK7uGJ4dSGiQiuHKGrEPqy0n0fdCgbMPY9iL41w==}
+    peerDependencies:
+      '@effect/platform': ^0.93.0
+      effect: ^3.19.0
+      ioredis: ^5
+      lmdb: ^3
+    peerDependenciesMeta:
+      ioredis:
+        optional: true
+      lmdb:
+        optional: true
 
   '@effect/language-service@0.55.2':
     resolution: {integrity: sha512-qagsdSuwwfyPw4Ns98c7YtkVS1gnYLtYIBVcwgAy29o2iVuC2h+u1GKVmD5zC9FvSWz3rAwbdVxij4cglrQBhw==}
@@ -2575,6 +2591,10 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
+  uuid@11.1.0:
+    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
+    hasBin: true
+
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
 
@@ -3017,6 +3037,12 @@ snapshots:
       '@dprint/formatter': 0.4.1
       '@dprint/typescript': 0.91.8
       prettier-linter-helpers: 1.0.0
+
+  '@effect/experimental@0.57.0(@effect/platform@0.93.0(effect@3.19.2))(effect@3.19.2)':
+    dependencies:
+      '@effect/platform': 0.93.0(effect@3.19.2)
+      effect: 3.19.2
+      uuid: 11.1.0
 
   '@effect/language-service@0.55.2': {}
 
@@ -5454,6 +5480,8 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  uuid@11.1.0: {}
 
   validate-npm-package-license@3.0.4:
     dependencies:

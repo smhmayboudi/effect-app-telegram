@@ -1,4 +1,5 @@
 import { Context, Effect, Layer } from "effect"
+import { type InputFileCache, InputFileCacheContext } from "./InputFileCache.js"
 import { type TelegramBotApi, TelegramBotApiContext, type TelegramBotApiError } from "./TelegramBotApi.js"
 
 // =============================================================================
@@ -10,7 +11,10 @@ export type CommandHandler = (
   userId: number,
   messageText: string,
   args: Array<string>,
-  telegramBotApi: TelegramBotApi
+  dependencies: {
+    inputFileCache: InputFileCache
+    telegramBotApi: TelegramBotApi
+  }
 ) => Effect.Effect<void, TelegramBotApiError>
 
 export interface CommandManager {
@@ -29,6 +33,7 @@ export class CommandManagerContext extends Context.Tag(
 export const CommandManagerLive = Layer.effect(
   CommandManagerContext,
   Effect.gen(function*() {
+    const inputFileCache = yield* InputFileCacheContext
     const telegramBotApi = yield* TelegramBotApiContext
     const commands: Map<string, CommandHandler> = new Map()
 
@@ -43,7 +48,7 @@ export const CommandManagerLive = Layer.effect(
         const args = parts.slice(1) // Remaining parts are arguments
         const handler = commands.get(command)
         if (handler) {
-          return handler(chatId, userId, messageText, args, telegramBotApi)
+          return handler(chatId, userId, messageText, args, { inputFileCache, telegramBotApi })
         } else {
           // Command not found, send a default response
           return telegramBotApi.sendMessage({

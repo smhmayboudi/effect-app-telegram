@@ -1,7 +1,8 @@
 import { Effect, Layer, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
-import { helpCommandHandler, startCommandHandler } from "./CommandManagerApp.js"
+import { audioCommandHandler, helpCommandHandler, startCommandHandler } from "./CommandManagerApp.js"
+import { InputFileCacheLive } from "./InputFileCache.js"
 import { TelegramBotApiConfigLive, TelegramBotApiContext, TelegramBotApiLive } from "./TelegramBotApi.js"
 
 // Application logic to handle incoming messages
@@ -11,6 +12,7 @@ const handleUpdates = Effect.gen(function*() {
   let offset = 0 // To track the latest update ID
 
   // Register built-in commands
+  commandManager.register("audio", audioCommandHandler)
   commandManager.register("help", helpCommandHandler)
   commandManager.register("start", startCommandHandler)
 
@@ -66,6 +68,7 @@ const TelegramBotAppLive = Layer.provide(
 pipe(
   handleUpdates,
   Effect.provide(CommandManagerLive),
+  Effect.provide(InputFileCacheLive),
   Effect.provide(TelegramBotAppLive),
   Effect.catchAll((error) => {
     console.error("Application error:", error)
