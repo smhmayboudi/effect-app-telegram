@@ -3464,9 +3464,9 @@ export interface InputMediaDocument {
  * @see https://core.telegram.org/bots/api#inputfile
  */
 export interface InputFile {
-  content?: string | Buffer | Blob
-  file?: File
-  filename?: string
+  content: string | Buffer
+  filename: string
+  mime_type: string
 }
 
 /**
@@ -7764,15 +7764,16 @@ const buildFormData = (params: unknown): FormData => {
         if ("file" in value && value.file instanceof File) {
           // File object
           formData.append(key, value.file)
-        } else if ("content" in value) {
+        } else if ("content" in value && "filename" in value && "mime_type" in value) {
           // File content as string or buffer
           const content = (value as { content: string | Buffer }).content
-          const filename = (value as { filename?: string }).filename || key
+          const filename = (value as { filename: string }).filename
+          const mime_type = (value as { mime_type: string }).mime_type
           if (typeof content === "string") {
-            formData.append(key, new Blob([content]), filename)
+            formData.append(key, new Blob([content], { type: mime_type }), filename)
           } else {
             // If content is a buffer, convert to Uint8Array first
-            formData.append(key, new Blob([new Uint8Array(content)]), filename)
+            formData.append(key, new Blob([new Uint8Array(content)], { type: mime_type }), filename)
           }
         } else if (value instanceof File) {
           // Handle direct File objects
