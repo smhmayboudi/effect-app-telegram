@@ -11,7 +11,8 @@ describe("AudioCacheService", () => {
       const filename = "test-audio.mp3"
       const audioData = {
         content: Buffer.from("fake audio data"),
-        filename: "test-audio.mp3"
+        filename: "test-audio.mp3",
+        mime_type: "audio/mpeg"
       }
 
       // Save the input file
@@ -54,7 +55,8 @@ describe("AudioCacheService", () => {
       const filename = "check-exists.mp3"
       const audioData = {
         content: Buffer.from("test data"),
-        filename: "check-exists.mp3"
+        filename: "check-exists.mp3",
+        mime_type: "audio/mpeg"
       }
 
       // Initially, the input file should not exist
@@ -83,11 +85,13 @@ describe("AudioCacheService", () => {
       const filename = "update-test.mp3"
       const initialData = {
         content: Buffer.from("initial data"),
-        filename: "update-test.mp3"
+        filename: "update-test.mp3",
+        mime_type: "audio/mpeg"
       }
       const updatedData = {
         content: Buffer.from("updated data"),
-        filename: "update-test.mp3"
+        filename: "update-test.mp3",
+        mime_type: "audio/mpeg"
       }
 
       // Save initial input file data
