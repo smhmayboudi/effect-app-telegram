@@ -7936,16 +7936,16 @@ const executeTelegramRequest = <T>(
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
       schedule: Schedule.identity<
+        | HttpClientError
         | TelegramBotApiConflictError
+        | TelegramBotApiInvalidResponseError
         | TelegramBotApiMethodError
         | TelegramBotApiRateLimitError
-        | TelegramBotApiInvalidResponseError
         | TelegramBotApiUnauthorizedError
-        | HttpClientError
       >().pipe(
         Schedule.addDelay((error) =>
           error._tag === "TelegramBotApiRateLimitError"
-            ? Duration.millis(config.rateLimitDelay)
+            ? error.retryAfter ? Duration.millis(error.retryAfter) : Duration.millis(config.rateLimitDelay)
             : Duration.millis(config.retryDelay)
         ),
         Schedule.intersect(Schedule.recurs(config.retryAttempts))
@@ -8398,30 +8398,47 @@ export const TelegramBotApiConfigLive = Layer.effect(
   TelegramBotApiConfigContext,
   Effect.gen(function*() {
     const apiBaseUrl = yield* Config.withDefault(
-      Config.string("TELEGRAM_API_BASE_URL"),
+      Config.string("TELEGRAM_API_BASE_URL").pipe(
+        Config.validate({
+          message: "Must be URL",
+          validation: (a) => {
+            try {
+              const parsed = new URL(a)
+              return parsed.protocol === "http:" || parsed.protocol === "https:"
+            } catch {
+              return false
+            }
+          }
+        })
+      ),
       "https://api.telegram.org/bot"
     )
     const rateLimitDelay = yield* Config.withDefault(
-      Config.number("TELEGRAM_RATE_LIMIT_DELAY"),
+      Config.number("TELEGRAM_RATE_LIMIT_DELAY").pipe(
+        Config.validate({ message: "Must be positive", validation: (a) => 0 < a })
+      ),
       1000
     )
     const retryAttempts = yield* Config.withDefault(
-      Config.number("TELEGRAM_RETRY_ATTEMPTS"),
+      Config.number("TELEGRAM_RETRY_ATTEMPTS").pipe(
+        Config.validate({ message: "Must be positive", validation: (a) => 0 < a })
+      ),
       3
     )
     const retryDelay = yield* Config.withDefault(
-      Config.number("TELEGRAM_RETRY_DELAY"),
+      Config.number("TELEGRAM_RETRY_DELAY").pipe(
+        Config.validate({ message: "Must be positive", validation: (a) => 0 < a })
+      ),
       1000
     )
     const timeout = yield* Config.withDefault(
-      Config.number("TELEGRAM_REQUEST_TIMEOUT"),
+      Config.number("TELEGRAM_REQUEST_TIMEOUT").pipe(
+        Config.validate({ message: "Must be positive", validation: (a) => 0 < a })
+      ),
       30000
     )
     const token = yield* Config.redacted("TELEGRAM_BOT_TOKEN").pipe(
-      Effect.filterOrFail(
-        (token) => Redacted.value(token) !== "",
-        () => new Error("TELEGRAM_BOT_TOKEN must not be empty")
-      )
+      Config.validate({ message: "Must not be empty", validation: (a) => "" !== Redacted.value(a) })
     )
 
     return {
