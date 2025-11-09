@@ -7729,7 +7729,7 @@ const containsFile = (params: unknown): boolean => {
     const value = obj[key]
     if (value && typeof value === "object") {
       // Check if it's an InputFile type
-      if ("file" in value || "fileId" in value || "content" in value) {
+      if ("content" in value && "filename" in value && "mime_type" in value) {
         return true
       }
       // Recursively check nested objects
@@ -7761,10 +7761,7 @@ const buildFormData = (params: unknown): FormData => {
     if (value !== undefined && value !== null) {
       if (typeof value === "object") {
         // Handle InputFile objects
-        if ("file" in value && value.file instanceof File) {
-          // File object
-          formData.append(key, value.file)
-        } else if ("content" in value && "filename" in value && "mime_type" in value) {
+        if ("content" in value && "filename" in value && "mime_type" in value) {
           // File content as string or buffer
           const content = (value as { content: string | Buffer }).content
           const filename = (value as { filename: string }).filename
