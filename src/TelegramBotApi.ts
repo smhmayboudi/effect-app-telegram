@@ -7736,8 +7736,7 @@ const makeTelegramRequest = (
   } else {
     // For regular requests, use JSON
     return HttpClientRequest.post(url).pipe(
-      HttpClientRequest.bodyUnsafeJson(params),
-      HttpClientRequest.setHeader("Content-Type", "application/json")
+      HttpClientRequest.bodyUnsafeJson(params)
       // HttpClientRequest.timeout(config.timeout)
     )
   }
