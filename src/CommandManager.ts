@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect"
-import { type InputFileCache, InputFileCacheContext } from "./InputFileCache.js"
+import { InputFileCacheContext, type MessageCache } from "./MessageCache.js"
 import { type TelegramBotApi, TelegramBotApiContext, type TelegramBotApiError } from "./TelegramBotApi.js"
 
 // =============================================================================
@@ -12,7 +12,7 @@ export type CommandHandler = (
   messageText: string,
   args: Array<string>,
   dependencies: {
-    inputFileCache: InputFileCache
+    inputFileCache: MessageCache
     telegramBotApi: TelegramBotApi
   }
 ) => Effect.Effect<void, TelegramBotApiError>

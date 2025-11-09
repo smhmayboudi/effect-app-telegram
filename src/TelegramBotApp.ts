@@ -9,7 +9,7 @@ import {
   photoCommandHandler,
   startCommandHandler
 } from "./CommandManagerApp.js"
-import { InputFileCacheLive } from "./InputFileCache.js"
+import { InputFileCacheLive } from "./MessageCache.js"
 import { TelegramBotApiConfigLive, TelegramBotApiContext, TelegramBotApiLive } from "./TelegramBotApi.js"
 
 // Application logic to handle incoming messages

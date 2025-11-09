@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@effect/vitest"
 import { Effect } from "effect"
-import { InputFileCacheContext, InputFileCacheLive } from "../src/InputFileCache.js"
+import { InputFileCacheContext, InputFileCacheLive } from "../src/MessageCache.js"
 
 // Test suite for AudioCacheService
 describe("AudioCacheService", () => {
