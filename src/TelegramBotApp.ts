@@ -1,4 +1,4 @@
-import { Effect, Layer, pipe, Schedule } from "effect"
+import { Duration, Effect, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import {
@@ -10,12 +10,19 @@ import {
   startCommandHandler
 } from "./CommandManagerApp.js"
 import { InputFileCacheLive } from "./MessageCache.js"
-import { TelegramBotApiConfigLive, TelegramBotApiContext, TelegramBotApiLive } from "./TelegramBotApi.js"
+import {
+  TelegramBotApiConfigContext,
+  TelegramBotApiConfigLive,
+  TelegramBotApiContext,
+  TelegramBotApiLive
+} from "./TelegramBotApi.js"
 
 // Application logic to handle incoming messages
 const handleUpdates = Effect.gen(function*() {
   const commandManager = yield* CommandManagerContext
   const telegramBotApi = yield* TelegramBotApiContext
+  const telegramBotApiConfig = yield* TelegramBotApiConfigContext
+
   let offset = 0 // To track the latest update ID
 
   // Register built-in commands
@@ -33,7 +40,7 @@ const handleUpdates = Effect.gen(function*() {
       const updates = yield* telegramBotApi.getUpdates({
         allowed_updates: ["message"], // Only get message updates
         offset: offset + 1, // Start from the next update after the last one
-        timeout: 30 // Long polling timeout in seconds
+        timeout: telegramBotApiConfig.timeout / 1000 // Long polling timeout in seconds
       })
       // Process each update
       for (const update of updates) {
@@ -65,21 +72,16 @@ const handleUpdates = Effect.gen(function*() {
         }
       }
     })
-  ).pipe(Effect.schedule(Schedule.spaced("1000 millis")))
+  ).pipe(Effect.schedule(Schedule.spaced(Duration.seconds(telegramBotApiConfig.timeout / 1000))))
 })
-
-// Define a layer that includes both the config and the Telegram Bot API service
-const TelegramBotAppLive = Layer.provide(
-  TelegramBotApiLive,
-  TelegramBotApiConfigLive
-)
 
 // Main application
 pipe(
   handleUpdates,
   Effect.provide(CommandManagerLive),
   Effect.provide(InputFileCacheLive),
-  Effect.provide(TelegramBotAppLive),
+  Effect.provide(TelegramBotApiLive),
+  Effect.provide(TelegramBotApiConfigLive),
   Effect.catchAll((error) => {
     console.error("Application error:", error)
     return Effect.die(error)
