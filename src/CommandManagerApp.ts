@@ -3,7 +3,7 @@ import type { CommandHandler } from "./CommandManager.js"
 import { TelegramBotApiError } from "./TelegramBotApi.js"
 
 // Help command handler effect
-export const audioCommandHandler: CommandHandler = (
+export const photoCommandHandler: CommandHandler = (
   chatId,
   userId,
   messageText,
@@ -16,43 +16,43 @@ export const audioCommandHandler: CommandHandler = (
     if (args.length < 1) {
       yield* telegramBotApi.sendMessage({
         chat_id: chatId,
-        text: "Please provide an audio filename. Usage: /audio <filename>"
+        text: "Please provide an photo filename. Usage: /photo <filename>"
       })
       return
     }
     const filename = args[0]
-    // Check if audio exists in cache
+    // Check if photo exists in cache
     const hasFile = yield* inputFileCache.has(filename).pipe(
       Effect.mapError((error) =>
         new TelegramBotApiError({
-          message: `Error processing audio command: ${String(error)}`
+          message: `Error processing photo command: ${String(error)}`
         })
       )
     )
     if (hasFile) {
-      // Send audio from cache
+      // Send photo from cache
       const cachedFile = yield* inputFileCache.get(filename).pipe(
         Effect.mapError((error) =>
           new TelegramBotApiError({
-            message: `Error processing audio command: ${String(error)}`
+            message: `Error processing photo command: ${String(error)}`
           })
         )
       )
       if (cachedFile) {
-        yield* Effect.logInfo(`Sending cached audio: ${filename}`)
-        yield* telegramBotApi.sendAudio({
-          audio: cachedFile,
-          caption: `Playing cached audio: ${filename}`,
-          chat_id: chatId
+        yield* Effect.logInfo(`Sending cached photo: ${filename}`)
+        yield* telegramBotApi.sendPhoto({
+          caption: `Playing cached photo: ${filename}`,
+          chat_id: chatId,
+          photo: cachedFile.photo?.sort((a, b) => b.width - a.width)[0].file_id ?? ""
         })
         return
       }
     }
-    // If not in cache, send a message that the audio is not available
-    yield* Effect.logInfo(`Audio not found in cache: ${filename}`)
+    // If not in cache, send a message that the photo is not available
+    yield* Effect.logInfo(`photo not found in cache: ${filename}`)
     yield* telegramBotApi.sendMessage({
       chat_id: chatId,
-      text: `Audio file "${filename}" not found in cache.`
+      text: `photo file "${filename}" not found in cache.`
     })
   })
 
@@ -69,10 +69,10 @@ export const helpCommandHandler: CommandHandler = (
     const helpMessage = "🤖 Available Commands:\n\n" +
       "/help - Show this help message\n" +
       "/start - Start interacting with the bot\n" +
-      "/audio <filename> - Send an audio file from cache\n" +
-      "/image1 image 1\n" +
-      "/image2 image 2\n" +
-      "/image3 image 3"
+      "/photo <filename> - Send an photo file from cache\n" +
+      "/photo1 photo 1\n" +
+      "/photo2 photo 2\n" +
+      "/photo3 photo 3"
     yield* telegramBotApi.sendMessage({
       chat_id: chatId,
       text: helpMessage
@@ -96,8 +96,8 @@ export const startCommandHandler: CommandHandler = (
     })
   })
 
-// Image1 command handler effect
-export const image1CommandHandler: CommandHandler = (
+// photo1 command handler effect
+export const photo1CommandHandler: CommandHandler = (
   chatId,
   userId,
   messageText,
@@ -114,13 +114,13 @@ export const image1CommandHandler: CommandHandler = (
     yield* Effect.logInfo(message)
   })
 
-// Image2 command handler effect
-export const image2CommandHandler: CommandHandler = (
+// photo2 command handler effect
+export const photo2CommandHandler: CommandHandler = (
   chatId,
   userId,
   messageText,
   args,
-  { telegramBotApi }
+  { inputFileCache, telegramBotApi }
 ) =>
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
@@ -130,19 +130,20 @@ export const image2CommandHandler: CommandHandler = (
       photo: "AgACAgQAAxkDAANeaQ9EyYY_8iIgQ-3RvHW3uu_NsLoAAq8LaxvPVH1QQEg0_LbVf5EBAAMCAAN4AAM2BA"
     })
     yield* Effect.logInfo(message)
+    yield* inputFileCache.save("293906.jpeg", message)
   })
 
-async function fetchImageAsBuffer(url: string) {
+async function fetchphotoAsBuffer(url: string) {
   const response = await fetch(url)
   if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`)
+    throw new Error(`Failed to fetch photo: ${response.status} ${response.statusText}`)
   }
   const arrayBuffer = await response.arrayBuffer()
   return Buffer.from(arrayBuffer)
 }
 
-// Image3 command handler effect
-export const image3CommandHandler: CommandHandler = (
+// photo3 command handler effect
+export const photo3CommandHandler: CommandHandler = (
   chatId,
   userId,
   messageText,
@@ -152,14 +153,14 @@ export const image3CommandHandler: CommandHandler = (
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
     const url = "https://avatars.githubusercontent.com/u/293906?v=4"
-    const blob = yield* Effect.promise(() => fetchImageAsBuffer(url))
+    const blob = yield* Effect.promise(() => fetchphotoAsBuffer(url))
     const message = yield* telegramBotApi.sendPhoto({
       caption: "📸 293906.jpeg",
       chat_id: chatId,
       photo: {
         content: blob,
         filename: "293906.jpeg",
-        mime_type: "image/jpeg"
+        mime_type: "photo/jpeg"
       }
     })
     yield* Effect.logInfo(message)

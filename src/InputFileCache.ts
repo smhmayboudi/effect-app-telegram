@@ -1,10 +1,10 @@
 import { Context, Effect, Layer } from "effect"
-import type { InputFile } from "./TelegramBotApi.js"
+import type { Message } from "./TelegramBotApi.js"
 
 export interface InputFileCache {
-  get(filename: string): Effect.Effect<InputFile | undefined, Error>
-  has(filename: string): Effect.Effect<boolean, Error>
-  save(filename: string, inputFile: InputFile): Effect.Effect<void, Error>
+  get(key: string): Effect.Effect<Message | undefined>
+  has(key: string): Effect.Effect<boolean>
+  save(key: string, message: Message): Effect.Effect<void>
 }
 
 export class InputFileCacheContext extends Context.Tag(
@@ -14,16 +14,16 @@ export class InputFileCacheContext extends Context.Tag(
 export const InputFileCacheLive = Layer.effect(
   InputFileCacheContext,
   Effect.sync(() => {
-    // Create an in-memory Map to store cached input files
-    const fileMap: Map<string, InputFile> = new Map()
+    // Create an in-memory Map to store cached messages
+    const fileMap: Map<string, Message> = new Map()
 
     // Implementation of the InputFileCache methods
     return InputFileCacheContext.of({
-      get: (filename) => Effect.sync(() => fileMap.get(filename)),
-      has: (filename) => Effect.sync(() => fileMap.has(filename)),
-      save: (filename, inputFile) =>
+      get: (key) => Effect.sync(() => fileMap.get(key)),
+      has: (key) => Effect.sync(() => fileMap.has(key)),
+      save: (key, message) =>
         Effect.sync(() => {
-          fileMap.set(filename, inputFile)
+          fileMap.set(key, message)
         })
     })
   })
