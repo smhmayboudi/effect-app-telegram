@@ -7,7 +7,7 @@
  */
 
 import { FetchHttpClient, HttpClient, HttpClientRequest, type HttpClientResponse } from "@effect/platform"
-import type { ResponseError } from "@effect/platform/HttpClientError"
+import type { HttpClientError, ResponseError } from "@effect/platform/HttpClientError"
 import { Config, Context, Data, Duration, Effect, Layer, pipe, Redacted, Schedule } from "effect"
 
 // =============================================================================
@@ -7935,28 +7935,29 @@ const executeTelegramRequest = <T>(
     Effect.flatMap((client) => client.execute(request)),
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
-      schedule: Schedule.compose(
-        Schedule.recurs(config.retryAttempts),
-        Schedule.spaced(Duration.millis(config.retryDelay))
-      ),
-      until: (error) => {
-        // Don't retry on unauthorized or method-specific errors
-        if (
-          error._tag === "RequestError" ||
-          error._tag === "ResponseError" ||
-          error._tag === "TelegramBotApiConflictError" ||
-          error._tag === "TelegramBotApiInvalidResponseError" ||
-          error._tag === "TelegramBotApiMethodError" ||
-          error._tag === "TelegramBotApiUnauthorizedError"
-        ) {
-          return false // Don't retry
-        }
-        // Retry on network errors and rate limits
-        return (
-          // error._tag === "TelegramBotApiNetworkError" ||
+      schedule: Schedule.identity<
+        | TelegramBotApiConflictError
+        | TelegramBotApiMethodError
+        | TelegramBotApiRateLimitError
+        | TelegramBotApiInvalidResponseError
+        | TelegramBotApiUnauthorizedError
+        | HttpClientError
+      >().pipe(
+        Schedule.addDelay((error) =>
           error._tag === "TelegramBotApiRateLimitError"
-        )
-      }
+            ? Duration.millis(config.rateLimitDelay)
+            : Duration.millis(config.retryDelay)
+        ),
+        Schedule.intersect(Schedule.recurs(config.retryAttempts))
+      ),
+      until: (error) => (
+        error._tag === "RequestError" ||
+        error._tag === "ResponseError" ||
+        error._tag === "TelegramBotApiConflictError" ||
+        error._tag === "TelegramBotApiInvalidResponseError" ||
+        error._tag === "TelegramBotApiMethodError" ||
+        error._tag === "TelegramBotApiUnauthorizedError"
+      )
     }),
     Effect.mapError((error) => new TelegramBotApiError({ message: `Unexpected error: ${String(error)}` }))
   ).pipe(
