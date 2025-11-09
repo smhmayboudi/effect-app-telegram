@@ -199,7 +199,11 @@ export interface Update {
 }
 
 /**
- * Use this method to receive incoming updates using long polling (Update objects.
+ * Use this method to receive incoming updates using long polling (wiki). Returns an Array of Update objects.
+ *
+ * Notes:
+ * 1. This method will not work if an outgoing webhook is set up.
+ * 2. In order to avoid getting duplicate updates, recalculate offset after each server response.
  * @see https://core.telegram.org/bots/api#getupdates
  */
 export interface GetUpdatesParams {
@@ -215,6 +219,11 @@ export interface GetUpdatesParams {
 
 /**
  * Use this method to specify a URL and receive incoming updates via an outgoing webhook. Whenever there is an update for the bot, we will send an HTTPS POST request to the specified URL, containing a JSON-serialized HTTP status code different from 2XY), we will repeat the request and give up after a reasonable amount of attempts. Returns True on success. If you'd like to make sure that the webhook was set by you, you can specify secret data in the parameter secret_token. If specified, the request will contain a header "X-Telegram-Bot-Api-Secret-Token" with the secret token as content.
+ *
+ * Notes:
+ * 1. You will not be able to receive updates using getUpdates for as long as an outgoing webhook is set up.
+ * 2. To use a self-signed certificate, you need to upload your public key certificate using certificate parameter. Please upload as InputFile, sending a String will not work.
+ * 3. Ports currently supported for webhooks: 443, 80, 88, 8443.
  * @see https://core.telegram.org/bots/api#setwebhook
  */
 export interface SetWebhookParams {
@@ -2062,6 +2071,7 @@ export interface CopyTextButton {
 
 /**
  * This object represents an incoming callback query from a callback button in an inline mode), the field inline_message_id will be present. Exactly one of the fields data or game_short_name will be present.
+ * NOTE: After the user presses a callback button, Telegram clients will display a progress bar until you call answerCallbackQuery. It is, therefore, necessary to react by calling answerCallbackQuery even if no notification to the user is needed (e.g., without specifying any of the optional parameters).
  * @see https://core.telegram.org/bots/api#callbackquery
  */
 export interface CallbackQuery {
@@ -2083,6 +2093,13 @@ export interface CallbackQuery {
 
 /**
  * Upon receiving a message with this object, Telegram clients will display a reply interface to the user (act as if the user has selected the bot's message and tapped 'Reply'). This can be extremely useful if you want to create user-friendly step-by-step interfaces without having to sacrifice privacy mode. Not supported in channels and for messages sent on behalf of a Telegram Business account.
+ *
+ * Example: A poll bot for groups runs in privacy mode (only receives commands, replies to its messages and mentions). There could be two ways to create a new poll:
+ *
+ * - Explain the user how to send a command with parameters (e.g. /newpoll question answer1 answer2). May be appealing for hardcore users but lacks modern day polish.
+ * - Guide the user through a step-by-step process. 'Please send me your question', 'Cool, now let's add the first answer option', 'Great. Keep adding answer options, then send /done when you're ready'.
+ *
+ * The last option is definitely more attractive. And if you use ForceReply in your bot's questions, it will receive the user's answers even if it only receives replies, commands and mentions - without any extra work for the user.
  * @see https://core.telegram.org/bots/api#forcereply
  */
 export interface ForceReply {
@@ -4347,6 +4364,10 @@ export interface SendDiceParams {
 
 /**
  * Use this method when you need to tell the user that something is happening on the bot's side. The status is set for 5 seconds or less (when a message arrives from your bot, Telegram clients clear its typing status). Returns True on success. Example: The sendChatAction with action = upload_photo. The user will see a "sending photo" status for the bot. We only recommend using this method when a response from the bot will take a noticeable amount of time to arrive.
+ *
+ * Example: The ImageBot needs some time to process a request and upload the image. Instead of sending a text message along the lines of “Retrieving image, please wait…”, the bot may use sendChatAction with action = upload_photo. The user will see a “sending photo” status for the bot.
+ *
+ * We only recommend using this method when a response from the bot will take a noticeable amount of time to arrive.
  * @see https://core.telegram.org/bots/api#sendchataction
  */
 export interface SendChatActionParams {
@@ -4548,6 +4569,8 @@ export interface SetChatPermissionsParams {
 
 /**
  * Use this method to generate a new primary invite link for a chat; any previously generated primary link is revoked. The bot must be an administrator in the chat for this to work and must have the appropriate administrator rights. Returns the new invite link as String on success.
+ *
+ * Note: Each administrator in a chat generates their own invite links. Bots can't use invite links generated by other administrators. If you want your bot to work with invite links, it will need to generate its own link using exportChatInviteLink or by calling the getChat method. If your bot needs to generate a new primary invite link replacing its previous one, use exportChatInviteLink again.
  * @see https://core.telegram.org/bots/api#exportchatinvitelink
  */
 export interface ExportChatInviteLinkParams {
@@ -4936,6 +4959,8 @@ export interface UnpinAllGeneralForumTopicMessagesParams {
 
 /**
  * Use this method to send answers to callback queries sent from inline keyboards. The answer will be displayed to the user as a notification at the top of the chat screen or as an alert. On success, True is returned. Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via @BotFather and accept the terms. Otherwise, you may use links like t.me/your_bot?start=XXXX that open your bot with a parameter.
+ *
+ * Alternatively, the user can be redirected to the specified Game URL. For this option to work, you must first create a game for your bot via @BotFather and accept the terms. Otherwise, you may use links like t.me/your_bot?start=XXXX that open your bot with a parameter.
  * @see https://core.telegram.org/bots/api#answercallbackquery
  */
 export interface AnswerCallbackQueryParams {
@@ -6154,6 +6179,8 @@ export interface InlineQueryResultMpeg4Gif {
 
 /**
  * Represents a link to a page containing an embedded video player or a video file. By default, this video file will be sent by the user with an optional caption. Alternatively, you can use input_message_content to send a message with the specified content instead of the video. If an InlineQueryResultVideo message contains an embedded video (e.g., YouTube), you must replace its content using input_message_content.
+ *
+ * If an InlineQueryResultVideo message contains an embedded video (e.g., YouTube), you must replace its content using input_message_content.
  * @see https://core.telegram.org/bots/api#inlinequeryresultvideo
  */
 export interface InlineQueryResultVideo {
@@ -7649,6 +7676,8 @@ export interface SetGameScoreParams {
 
 /**
  * Use this method to get data for high score tables. Will return the score of the specified user and several of their neighbors in a game. Returns an Array of GameHighScore objects. This method will currently return scores for the target user, plus two of their closest neighbors on each side. Will also return the top three users if the user and their neighbors are not among them. Please note that this behavior is subject to change.
+ *
+ * This method will currently return scores for the target user, plus two of their closest neighbors on each side. Will also return the top three users if the user and their neighbors are not among them. Please note that this behavior is subject to change.
  * @see https://core.telegram.org/bots/api#getgamehighscores
  */
 export interface GetGameHighScoresParams {
