@@ -8,7 +8,7 @@
 
 import { FetchHttpClient, HttpClient, HttpClientRequest, type HttpClientResponse } from "@effect/platform"
 import type { ResponseError } from "@effect/platform/HttpClientError"
-import { Config, Context, Data, Effect, Layer, pipe, Redacted } from "effect"
+import { Config, Context, Data, Duration, Effect, Layer, pipe, Redacted, Schedule } from "effect"
 
 // =============================================================================
 // Error Types
@@ -28,18 +28,93 @@ export class TelegramBotApiError extends Data.TaggedError(
 }> {}
 
 /**
- * Error for HTTP-related issues (network, timeout, etc.)
- * This error is thrown when there are network issues or timeouts
+ * Error for bot conflict
+ * This error is thrown when there are issues with conflict
  */
-export class TelegramBotApiNetworkError extends Data.TaggedError(
-  "TelegramBotApiNetworkError"
+export class TelegramBotApiConflictError extends Data.TaggedError(
+  "TelegramBotApiConflictError"
 )<{
-  /** Error message describing the network issue */
+  /** Error message describing the issue */
   readonly message: string
-  /** The API method where the network error occurred, if applicable */
+  /** The API method where the error occurred, if applicable */
   readonly method?: string
-  /** The underlying error that caused this network error */
-  readonly cause?: unknown
+}> {}
+
+// /**
+//  * Error for file upload/download issues
+//  * This error is thrown when there are issues with file operations
+//  */
+// export class TelegramBotApiFileError extends Data.TaggedError(
+//   "TelegramBotApiFileError"
+// )<{
+//   /** Error message describing the file issue */
+//   readonly message: string
+//   /** The API method where the file error occurred, if applicable */
+//   readonly method?: string
+//   /** Name of the file that caused the issue */
+//   readonly fileName?: string
+// }> {}
+
+/**
+ * Error for method-specific issues (e.g., wrong parameters)
+ * This error is thrown when the API returns an error specific to a method call
+ */
+export class TelegramBotApiMethodError extends Data.TaggedError(
+  "TelegramBotApiMethodError"
+)<{
+  /** Error message from the API */
+  readonly message: string
+  /** The API method that resulted in the error */
+  readonly method: string
+  /** Parameters passed to the method that resulted in the error */
+  readonly parameters?: Record<string, unknown>
+}> {}
+
+// /**
+//  * Error for HTTP-related issues (network, timeout, etc.)
+//  * This error is thrown when there are network issues or timeouts
+//  */
+// export class TelegramBotApiNetworkError extends Data.TaggedError(
+//   "TelegramBotApiNetworkError"
+// )<{
+//   /** Error message describing the network issue */
+//   readonly message: string
+//   /** The API method where the network error occurred, if applicable */
+//   readonly method?: string
+//   /** The underlying error that caused this network error */
+//   readonly cause?: unknown
+// }> {}
+
+// /**
+//  * Error for parsing issues
+//  * This error is thrown when there are issues parsing data or responses
+//  */
+// export class TelegramBotApiParseError extends Data.TaggedError(
+//   "TelegramBotApiParseError"
+// )<{
+//   /** Error message describing the parsing issue */
+//   readonly message: string
+//   /** The API method where the parsing error occurred, if applicable */
+//   readonly method?: string
+//   /** The field that failed to parse */
+//   readonly field?: string
+//   /** The value that failed to parse */
+//   readonly value?: unknown
+// }> {}
+
+/**
+ * Error for rate limiting by the Telegram API
+ * This error is thrown when the API returns a 429 status code indicating rate limiting
+ */
+export class TelegramBotApiRateLimitError extends Data.TaggedError(
+  "TelegramBotApiRateLimitError"
+)<{
+  /** Error message describing the rate limit issue */
+  readonly message: string
+  /** The API method that triggered the rate limit */
+  readonly method?: string
+  /** Number of seconds to wait before making another request, if provided by the API */
+  readonly retryAfter?: number
 }> {}
 
 /**
@@ -58,21 +133,6 @@ export class TelegramBotApiInvalidResponseError extends Data.TaggedError(
 }> {}
 
 /**
- * Error for rate limiting by the Telegram API
- * This error is thrown when the API returns a 429 status code indicating rate limiting
- */
-export class TelegramBotApiRateLimitError extends Data.TaggedError(
-  "TelegramBotApiRateLimitError"
-)<{
-  /** Error message describing the rate limit issue */
-  readonly message: string
-  /** The API method that triggered the rate limit */
-  readonly method?: string
-  /** Number of seconds to wait before making another request, if provided by the API */
-  readonly retryAfter?: number
-}> {}
-
-/**
  * Error for unauthorized access to the API
  * This error is thrown when the API returns a 401 or 403 status code
  */
@@ -83,53 +143,6 @@ export class TelegramBotApiUnauthorizedError extends Data.TaggedError(
   readonly message: string
   /** The API method where the unauthorized access occurred, if applicable */
   readonly method?: string
-}> {}
-
-/**
- * Error for method-specific issues (e.g., wrong parameters)
- * This error is thrown when the API returns an error specific to a method call
- */
-export class TelegramBotApiMethodError extends Data.TaggedError(
-  "TelegramBotApiMethodError"
-)<{
-  /** Error message from the API */
-  readonly message: string
-  /** The API method that resulted in the error */
-  readonly method: string
-  /** Parameters passed to the method that resulted in the error */
-  readonly parameters?: Record<string, unknown>
-}> {}
-
-/**
- * Error for file upload/download issues
- * This error is thrown when there are issues with file operations
- */
-export class TelegramBotApiFileError extends Data.TaggedError(
-  "TelegramBotApiFileError"
-)<{
-  /** Error message describing the file issue */
-  readonly message: string
-  /** The API method where the file error occurred, if applicable */
-  readonly method?: string
-  /** Name of the file that caused the issue */
-  readonly fileName?: string
-}> {}
-
-/**
- * Error for parsing issues
- * This error is thrown when there are issues parsing data or responses
- */
-export class TelegramBotApiParseError extends Data.TaggedError(
-  "TelegramBotApiParseError"
-)<{
-  /** Error message describing the parsing issue */
-  readonly message: string
-  /** The API method where the parsing error occurred, if applicable */
-  readonly method?: string
-  /** The field that failed to parse */
-  readonly field?: string
-  /** The value that failed to parse */
-  readonly value?: unknown
 }> {}
 
 // =============================================================================
@@ -7830,7 +7843,7 @@ const handleTelegramResponse = <T>(
 ): Effect.Effect<
   T,
   | ResponseError
-  | TelegramBotApiError
+  | TelegramBotApiConflictError
   | TelegramBotApiInvalidResponseError
   | TelegramBotApiMethodError
   | TelegramBotApiRateLimitError
@@ -7866,13 +7879,11 @@ const handleTelegramResponse = <T>(
           description.toLowerCase().includes("conflict")
         ) {
           return Effect.fail(
-            new TelegramBotApiError({ message: `Bot conflict: ${message}` })
+            new TelegramBotApiConflictError({ message: `Bot conflict: ${message}` })
           )
         } else if (errorCode === "401" || errorCode === "403") {
           return Effect.fail(
-            new TelegramBotApiUnauthorizedError({
-              message: `Unauthorized: ${message}`
-            })
+            new TelegramBotApiUnauthorizedError({ message: `Unauthorized: ${message}` })
           )
         } else if (errorCode === "429") {
           const retryAfter = (json as any).parameters && "retry_after" in (json as any).parameters
@@ -7924,15 +7935,21 @@ const executeTelegramRequest = <T>(
     Effect.flatMap((client) => client.execute(request)),
     Effect.flatMap((response) => handleTelegramResponse<T>(response)),
     Effect.retry({
-      times: config.retryAttempts,
-      // delay: config.retryDelay,
+      schedule: Schedule.compose(
+        Schedule.recurs(config.retryAttempts),
+        Schedule.spaced(Duration.millis(config.retryDelay))
+      ),
       until: (error) => {
         // Don't retry on unauthorized or method-specific errors
         if (
-          error._tag === "TelegramBotApiUnauthorizedError" ||
-          error._tag === "TelegramBotApiMethodError"
+          error._tag === "RequestError" ||
+          error._tag === "ResponseError" ||
+          error._tag === "TelegramBotApiConflictError" ||
+          error._tag === "TelegramBotApiInvalidResponseError" ||
+          error._tag === "TelegramBotApiMethodError" ||
+          error._tag === "TelegramBotApiUnauthorizedError"
         ) {
-          return true
+          return false // Don't retry
         }
         // Retry on network errors and rate limits
         return (
@@ -7941,14 +7958,7 @@ const executeTelegramRequest = <T>(
         )
       }
     }),
-    Effect.mapError((error) => {
-      if (error._tag === "TelegramBotApiError") {
-        return error
-      }
-      return new TelegramBotApiError({
-        message: `Unexpected error: ${String(error)}`
-      })
-    })
+    Effect.mapError((error) => new TelegramBotApiError({ message: `Unexpected error: ${String(error)}` }))
   ).pipe(
     Effect.provide(FetchHttpClient.layer)
   )
