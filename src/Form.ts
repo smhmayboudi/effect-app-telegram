@@ -131,17 +131,19 @@ export const FormManagerLive = Layer.effect(
           const maybeFormState = yield* formCache.get(chatId)
           if (Option.isNone(maybeFormState)) {
             // No active form for this chat, ignore the input
-            return yield* Effect.void
+            yield* Effect.void
+            return
           }
           const formState = maybeFormState.value
           const formsMap = yield* Ref.get(formsRef)
           const formDef = formsMap.get(formState.formName)
           if (!formDef) {
-            return yield* Effect.fail(
+            yield* Effect.fail(
               new TelegramBotApiError({
                 message: `Form "${formState.formName}" not found`
               })
             )
+            return
           }
           // Store the user's input for the current step
           const currentStep = formDef.steps[formState.currentStep]
@@ -154,21 +156,21 @@ export const FormManagerLive = Layer.effect(
             // Form is complete
             yield* formDef.onComplete(chatId, updatedResults, telegramBotApi)
             yield* formCache.delete(chatId)
-          } else {
-            // Move to the next step
-            const nextStep = formDef.steps[nextStepIndex]
-            const newState: FormState = {
-              currentStep: nextStepIndex,
-              formName: formState.formName,
-              results: updatedResults
-            }
-            yield* formCache.set(chatId, newState)
-            // Send next step message
-            yield* telegramBotApi.sendMessage({
-              chat_id: chatId,
-              text: nextStep.message
-            })
+            return
           }
+          // Move to the next step
+          const nextStep = formDef.steps[nextStepIndex]
+          const newState: FormState = {
+            currentStep: nextStepIndex,
+            formName: formState.formName,
+            results: updatedResults
+          }
+          yield* formCache.set(chatId, newState)
+          // Send next step message
+          yield* telegramBotApi.sendMessage({
+            chat_id: chatId,
+            text: nextStep.message
+          })
         }),
       registerForm: (formDefinition) =>
         Ref.update(formsRef, (formsMap) => formsMap.set(formDefinition.name, formDefinition)),
@@ -182,21 +184,21 @@ export const FormManagerLive = Layer.effect(
                 message: `Form "${formName}" not found or has no steps`
               })
             )
-          } else {
-            const initiaStepIndex = 0
-            const initiaStep = formDef.steps[initiaStepIndex]
-            const initialState: FormState = {
-              currentStep: initiaStepIndex,
-              formName,
-              results: {}
-            }
-            yield* formCache.set(chatId, initialState)
-            // Send first step message
-            yield* telegramBotApi.sendMessage({
-              chat_id: chatId,
-              text: initiaStep.message
-            })
+            return
           }
+          const initiaStepIndex = 0
+          const initiaStep = formDef.steps[initiaStepIndex]
+          const initialState: FormState = {
+            currentStep: initiaStepIndex,
+            formName,
+            results: {}
+          }
+          yield* formCache.set(chatId, initialState)
+          // Send first step message
+          yield* telegramBotApi.sendMessage({
+            chat_id: chatId,
+            text: initiaStep.message
+          })
         })
     })
   })

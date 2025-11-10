@@ -63,13 +63,13 @@ export const CommandManagerLive = Layer.effect(
               args,
               { formManager, historyCache, messageCache, telegramBotApi }
             )
-          } else {
-            // Command not found, send a default response
-            yield* telegramBotApi.sendMessage({
-              chat_id: chatId,
-              text: `Unknown command: /${command}. Use /help to see available commands.`
-            })
+            return
           }
+          // Command not found, send a default response
+          yield* telegramBotApi.sendMessage({
+            chat_id: chatId,
+            text: `Unknown command: /${command}. Use /help to see available commands.`
+          })
         }),
       register: (command, handler) =>
         Ref.update(commandsRef, (commands) => commands.set(command.toLowerCase(), handler))

@@ -7746,13 +7746,12 @@ const makeTelegramRequest = (
       HttpClientRequest.bodyFormData(formData)
       // HttpClientRequest.timeout(config.timeout)
     )
-  } else {
-    // For regular requests, use JSON
-    return HttpClientRequest.post(url).pipe(
-      HttpClientRequest.bodyUnsafeJson(params)
-      // HttpClientRequest.timeout(config.timeout)
-    )
   }
+  // For regular requests, use JSON
+  return HttpClientRequest.post(url).pipe(
+    HttpClientRequest.bodyUnsafeJson(params)
+    // HttpClientRequest.timeout(config.timeout)
+  )
 }
 
 /**
@@ -7895,23 +7894,21 @@ const handleTelegramResponse = <T>(
               ...retryAfter ? { retryAfter } : {}
             })
           )
-        } else {
-          return Effect.fail(
-            new TelegramBotApiMethodError({
-              message,
-              method: ((json as any).parameters?.method as string) || "unknown"
-            })
-          )
         }
-      } else {
-        // Invalid response format
         return Effect.fail(
-          new TelegramBotApiInvalidResponseError({
-            message: `Invalid response format: ${JSON.stringify(json)}`,
-            response: json
+          new TelegramBotApiMethodError({
+            message,
+            method: ((json as any).parameters?.method as string) || "unknown"
           })
         )
       }
+      // Invalid response format
+      return Effect.fail(
+        new TelegramBotApiInvalidResponseError({
+          message: `Invalid response format: ${JSON.stringify(json)}`,
+          response: json
+        })
+      )
     })
   )
 }

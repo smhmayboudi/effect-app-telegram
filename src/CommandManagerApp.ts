@@ -1,6 +1,5 @@
 import { Effect } from "effect"
 import type { CommandHandler } from "./CommandManager.js"
-import { TelegramBotApiError } from "./TelegramBotApi.js"
 
 // Help command handler effect
 export const photoCommandHandler: CommandHandler = (
@@ -18,32 +17,26 @@ export const photoCommandHandler: CommandHandler = (
         chat_id: chatId,
         text: "Please provide an photo filename. Usage: /photo <filename>"
       })
-    } else {
-      const filename = args[0]
-      // Send photo from cache
-      const cached = yield* messageCache.get(filename).pipe(
-        Effect.mapError((error) =>
-          new TelegramBotApiError({
-            message: `Error processing photo command: ${String(error)}`
-          })
-        )
-      )
-      if (cached) {
-        yield* Effect.logInfo(`Sending cached photo: ${filename}`)
-        yield* telegramBotApi.sendPhoto({
-          caption: `Playing cached photo: ${filename}`,
-          chat_id: chatId,
-          photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
-        })
-      } else {
-        // If not in cache, send a message that the photo is not available
-        yield* Effect.logInfo(`photo not found in cache: ${filename}`)
-        yield* telegramBotApi.sendMessage({
-          chat_id: chatId,
-          text: `photo file "${filename}" not found in cache.`
-        })
-      }
+      return
     }
+    const filename = args[0]
+    // Send photo from cache
+    const cached = yield* messageCache.get(filename)
+    if (cached) {
+      yield* Effect.logInfo(`Sending cached photo: ${filename}`)
+      yield* telegramBotApi.sendPhoto({
+        caption: `Playing cached photo: ${filename}`,
+        chat_id: chatId,
+        photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
+      })
+      return
+    }
+    // If not in cache, send a message that the photo is not available
+    yield* Effect.logInfo(`photo not found in cache: ${filename}`)
+    yield* telegramBotApi.sendMessage({
+      chat_id: chatId,
+      text: `photo file "${filename}" not found in cache.`
+    })
   })
 
 // Help command handler effect
@@ -205,18 +198,18 @@ export const formCommandHandler: CommandHandler = (
         chat_id: chatId,
         text: "Please provide a form name. Usage: /form <formName>"
       })
-    } else {
-      const formName = args[0]
-      // Try to start the form
-      yield* formManager.startForm(chatId, formName, telegramBotApi).pipe(
-        Effect.catchAll((error) =>
-          telegramBotApi.sendMessage({
-            chat_id: chatId,
-            text: `Error starting form: ${error.message || "Unknown error"}`
-          })
-        )
-      )
+      return
     }
+    const formName = args[0]
+    // Try to start the form
+    yield* formManager.startForm(chatId, formName, telegramBotApi).pipe(
+      Effect.catchAll((error) =>
+        telegramBotApi.sendMessage({
+          chat_id: chatId,
+          text: `Error starting form: ${error.message || "Unknown error"}`
+        })
+      )
+    )
   })
 
 // Form list command handler effect
