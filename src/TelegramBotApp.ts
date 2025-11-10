@@ -2,6 +2,8 @@ import { Duration, Effect, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import {
+  formCommandHandler,
+  formListCommandHandler,
   helpCommandHandler,
   historybackCommandHandler,
   historypushCommandHandler,
@@ -11,6 +13,7 @@ import {
   photoCommandHandler,
   startCommandHandler
 } from "./CommandManagerApp.js"
+import { createForm, createFormStep, FormCacheLive, FormManagerContext, FormManagerLive } from "./Form.js"
 import { HistoryCacheLive } from "./HistoryCache.js"
 import { MessageCacheLive } from "./MessageCache.js"
 import {
@@ -23,6 +26,7 @@ import {
 // Application logic to handle incoming messages
 const handleUpdates = Effect.gen(function*() {
   const commandManager = yield* CommandManagerContext
+  const formManager = yield* FormManagerContext
   const telegramBotApi = yield* TelegramBotApiContext
   const telegramBotApiConfig = yield* TelegramBotApiConfigContext
 
@@ -37,6 +41,26 @@ const handleUpdates = Effect.gen(function*() {
   commandManager.register("start", startCommandHandler)
   commandManager.register("historypush", historypushCommandHandler)
   commandManager.register("historyback", historybackCommandHandler)
+  commandManager.register("form", formCommandHandler)
+  commandManager.register("formlist", formListCommandHandler)
+
+  // Example form registration
+  const registrationForm = createForm(
+    "registration",
+    [
+      createFormStep("What is your name?", "name"),
+      createFormStep("What is your email address?", "email"),
+      createFormStep("What is your age?", "age")
+    ],
+    (chatId, results, telegramBotApi) =>
+      Effect.gen(function*() {
+        const text = `Registration complete!\n\nName: ${results.name}\nEmail: ${results.email}\nAge: ${results.age}`
+        // Send the completion message to the user
+        yield* telegramBotApi.sendMessage({ chat_id: chatId, text })
+      })
+  )
+
+  yield* formManager.registerForm(registrationForm)
 
   // Infinite loop to continuously poll for updates
   yield* Effect.forever(
@@ -61,6 +85,8 @@ const handleUpdates = Effect.gen(function*() {
           if (messageText.startsWith("/")) {
             yield* commandManager.handle(messageText, chatId, userId)
           } else {
+            // Check if user is filling out a form
+            yield* formManager.processInput(chatId, messageText, telegramBotApi)
             // Send "hi" back to the user for non-command messages
             const text = "hi"
             yield* telegramBotApi.sendMessage({
@@ -84,6 +110,8 @@ const handleUpdates = Effect.gen(function*() {
 pipe(
   handleUpdates,
   Effect.provide(CommandManagerLive),
+  Effect.provide(FormManagerLive),
+  Effect.provide(FormCacheLive),
   Effect.provide(HistoryCacheLive),
   Effect.provide(MessageCacheLive),
   Effect.provide(TelegramBotApiLive),

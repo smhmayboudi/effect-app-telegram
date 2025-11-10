@@ -64,7 +64,9 @@ export const helpCommandHandler: CommandHandler = (
       "/photo2 photo 2\n" +
       "/photo3 photo 3\n" +
       "/historypush\n" +
-      "/historyback"
+      "/historyback\n" +
+      "/formlist\n" +
+      "/form <name>"
     yield* telegramBotApi.sendMessage({
       chat_id: chatId,
       text: helpMessage
@@ -186,4 +188,54 @@ export const historybackCommandHandler: CommandHandler = (
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
     yield* historyCache.back(userId)
+  })
+
+// Form command handler effect
+export const formCommandHandler: CommandHandler = (
+  chatId,
+  userId,
+  messageText,
+  args,
+  { formManager, telegramBotApi }
+) =>
+  Effect.gen(function*() {
+    yield* Effect.logInfo(chatId, userId, messageText, args)
+
+    if (args.length < 1) {
+      yield* telegramBotApi.sendMessage({
+        chat_id: chatId,
+        text: "Please provide a form name. Usage: /form <formName>"
+      })
+    } else {
+      const formName = args[0]
+
+      // Try to start the form
+      yield* formManager.startForm(chatId, formName, telegramBotApi).pipe(
+        Effect.catchAll((error) =>
+          telegramBotApi.sendMessage({
+            chat_id: chatId,
+            text: `Error starting form: ${error.message || "Unknown error"}`
+          })
+        )
+      )
+    }
+  })
+
+// Form list command handler effect
+export const formListCommandHandler: CommandHandler = (
+  chatId,
+  userId,
+  messageText,
+  args,
+  { telegramBotApi }
+) =>
+  Effect.gen(function*() {
+    yield* Effect.logInfo(chatId, userId, messageText, args)
+
+    // For now, we'll send a placeholder message about available forms
+    // In a more sophisticated implementation, we would have a way to list registered forms
+    yield* telegramBotApi.sendMessage({
+      chat_id: chatId,
+      text: "Available forms: registration (example forms)"
+    })
   })
