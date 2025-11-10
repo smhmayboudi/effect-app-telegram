@@ -116,10 +116,7 @@ pipe(
   Effect.provide(MessageCacheLive),
   Effect.provide(TelegramBotApiLive),
   Effect.provide(TelegramBotApiConfigLive),
-  Effect.catchAll((error) => {
-    console.error("Application error:", error)
-    return Effect.die(error)
-  }),
+  Effect.catchAll(Effect.die),
   Effect.runPromise
 )
 

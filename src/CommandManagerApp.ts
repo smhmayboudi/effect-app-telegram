@@ -18,31 +18,31 @@ export const photoCommandHandler: CommandHandler = (
         chat_id: chatId,
         text: "Please provide an photo filename. Usage: /photo <filename>"
       })
-      return
-    }
-    const filename = args[0]
-    // Send photo from cache
-    const cached = yield* messageCache.get(filename).pipe(
-      Effect.mapError((error) =>
-        new TelegramBotApiError({
-          message: `Error processing photo command: ${String(error)}`
-        })
-      )
-    )
-    if (cached) {
-      yield* Effect.logInfo(`Sending cached photo: ${filename}`)
-      yield* telegramBotApi.sendPhoto({
-        caption: `Playing cached photo: ${filename}`,
-        chat_id: chatId,
-        photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
-      })
     } else {
-      // If not in cache, send a message that the photo is not available
-      yield* Effect.logInfo(`photo not found in cache: ${filename}`)
-      yield* telegramBotApi.sendMessage({
-        chat_id: chatId,
-        text: `photo file "${filename}" not found in cache.`
-      })
+      const filename = args[0]
+      // Send photo from cache
+      const cached = yield* messageCache.get(filename).pipe(
+        Effect.mapError((error) =>
+          new TelegramBotApiError({
+            message: `Error processing photo command: ${String(error)}`
+          })
+        )
+      )
+      if (cached) {
+        yield* Effect.logInfo(`Sending cached photo: ${filename}`)
+        yield* telegramBotApi.sendPhoto({
+          caption: `Playing cached photo: ${filename}`,
+          chat_id: chatId,
+          photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
+        })
+      } else {
+        // If not in cache, send a message that the photo is not available
+        yield* Effect.logInfo(`photo not found in cache: ${filename}`)
+        yield* telegramBotApi.sendMessage({
+          chat_id: chatId,
+          text: `photo file "${filename}" not found in cache.`
+        })
+      }
     }
   })
 
@@ -200,7 +200,6 @@ export const formCommandHandler: CommandHandler = (
 ) =>
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
-
     if (args.length < 1) {
       yield* telegramBotApi.sendMessage({
         chat_id: chatId,
@@ -208,7 +207,6 @@ export const formCommandHandler: CommandHandler = (
       })
     } else {
       const formName = args[0]
-
       // Try to start the form
       yield* formManager.startForm(chatId, formName, telegramBotApi).pipe(
         Effect.catchAll((error) =>
@@ -231,7 +229,6 @@ export const formListCommandHandler: CommandHandler = (
 ) =>
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
-
     // For now, we'll send a placeholder message about available forms
     // In a more sophisticated implementation, we would have a way to list registered forms
     yield* telegramBotApi.sendMessage({
