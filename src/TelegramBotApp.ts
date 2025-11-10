@@ -3,12 +3,15 @@ import { Duration, Effect, pipe, Schedule } from "effect"
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import {
   helpCommandHandler,
+  historybackCommandHandler,
+  historypushCommandHandler,
   photo1CommandHandler,
   photo2CommandHandler,
   photo3CommandHandler,
   photoCommandHandler,
   startCommandHandler
 } from "./CommandManagerApp.js"
+import { HistoryCacheLive } from "./HistoryCache.js"
 import { MessageCacheLive } from "./MessageCache.js"
 import {
   TelegramBotApiConfigContext,
@@ -32,6 +35,8 @@ const handleUpdates = Effect.gen(function*() {
   commandManager.register("photo2", photo2CommandHandler)
   commandManager.register("photo3", photo3CommandHandler)
   commandManager.register("start", startCommandHandler)
+  commandManager.register("historypush", historypushCommandHandler)
+  commandManager.register("historyback", historybackCommandHandler)
 
   // Infinite loop to continuously poll for updates
   yield* Effect.forever(
@@ -79,6 +84,7 @@ const handleUpdates = Effect.gen(function*() {
 pipe(
   handleUpdates,
   Effect.provide(CommandManagerLive),
+  Effect.provide(HistoryCacheLive),
   Effect.provide(MessageCacheLive),
   Effect.provide(TelegramBotApiLive),
   Effect.provide(TelegramBotApiConfigLive),

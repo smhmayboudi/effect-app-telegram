@@ -62,7 +62,9 @@ export const helpCommandHandler: CommandHandler = (
       "/photo <filename> - Send an photo file from cache\n" +
       "/photo1 photo 1\n" +
       "/photo2 photo 2\n" +
-      "/photo3 photo 3"
+      "/photo3 photo 3\n" +
+      "/historypush\n" +
+      "/historyback"
     yield* telegramBotApi.sendMessage({
       chat_id: chatId,
       text: helpMessage
@@ -154,4 +156,34 @@ export const photo3CommandHandler: CommandHandler = (
       }
     })
     yield* Effect.logInfo(message)
+  })
+
+// Historypush command handler effect
+export const historypushCommandHandler: CommandHandler = (
+  chatId,
+  userId,
+  messageText,
+  args,
+  { historyCache, telegramBotApi }
+) =>
+  Effect.gen(function*() {
+    yield* Effect.logInfo(chatId, userId, messageText, args)
+    const method = "sendMessage"
+    const text = "HISTORY PUSH"
+    const data = { chat_id: chatId, text }
+    yield* telegramBotApi[method](data)
+    yield* historyCache.push(userId, { data, method })
+  })
+
+// Historyback command handler effect
+export const historybackCommandHandler: CommandHandler = (
+  chatId,
+  userId,
+  messageText,
+  args,
+  { historyCache }
+) =>
+  Effect.gen(function*() {
+    yield* Effect.logInfo(chatId, userId, messageText, args)
+    yield* historyCache.back(userId)
   })

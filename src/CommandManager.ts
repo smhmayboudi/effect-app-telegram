@@ -1,4 +1,5 @@
 import { Context, Effect, Layer } from "effect"
+import { type HistoryCache, HistoryCacheContext } from "./HistoryCache.js"
 import { type MessageCache, MessageCacheContext } from "./MessageCache.js"
 import { type TelegramBotApi, TelegramBotApiContext, type TelegramBotApiError } from "./TelegramBotApi.js"
 
@@ -12,6 +13,7 @@ export type CommandHandler = (
   messageText: string,
   args: Array<string>,
   dependencies: {
+    historyCache: HistoryCache
     messageCache: MessageCache
     telegramBotApi: TelegramBotApi
   }
@@ -33,6 +35,7 @@ export class CommandManagerContext extends Context.Tag(
 export const CommandManagerLive = Layer.effect(
   CommandManagerContext,
   Effect.gen(function*() {
+    const historyCache = yield* HistoryCacheContext
     const messageCache = yield* MessageCacheContext
     const telegramBotApi = yield* TelegramBotApiContext
     const commands: Map<string, CommandHandler> = new Map()
@@ -48,7 +51,7 @@ export const CommandManagerLive = Layer.effect(
         const args = parts.slice(1) // Remaining parts are arguments
         const handler = commands.get(command)
         if (handler) {
-          return handler(chatId, userId, messageText, args, { messageCache, telegramBotApi })
+          return handler(chatId, userId, messageText, args, { historyCache, messageCache, telegramBotApi })
         } else {
           // Command not found, send a default response
           return telegramBotApi.sendMessage({
