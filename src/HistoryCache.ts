@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Ref } from "effect"
 import { type TelegramBotApi, TelegramBotApiContext, type TelegramBotApiError } from "./TelegramBotApi.js"
 
 export interface History {
@@ -22,12 +22,13 @@ export const HistoryCacheLive = Layer.effect(
     const telegramBotApi = yield* TelegramBotApiContext
 
     // Create an in-memory Map to store cached histories
-    const histories: Map<number, Array<History>> = new Map()
+    const historiesRef = yield* Ref.make(new Map<number, Array<History>>())
 
     // Implementation of the HistoryCache methods
     return HistoryCacheContext.of({
       back: (userId) =>
         Effect.gen(function*() {
+          const histories = yield* Ref.get(historiesRef)
           const history = histories.get(userId)?.pop()
           if (
             history && history.method in telegramBotApi &&
@@ -37,15 +38,21 @@ export const HistoryCacheLive = Layer.effect(
           }
         }),
       delete: (userId) =>
-        Effect.sync(() => {
+        Ref.update(historiesRef, (histories) => {
           histories.delete(userId)
+
+          return histories
         }),
       push: (userId, item) =>
-        Effect.sync(() => {
-          if (!histories.has(userId)) {
-            histories.set(userId, [])
+        Ref.update(historiesRef, (histories) => {
+          const userHistory = histories.get(userId)
+          if (userHistory) {
+            userHistory.push(item)
+          } else {
+            histories.set(userId, [item])
           }
-          histories.get(userId)?.push(item)
+
+          return histories
         })
     })
   })

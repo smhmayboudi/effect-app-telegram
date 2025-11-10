@@ -33,16 +33,16 @@ const handleUpdates = Effect.gen(function*() {
   let offset = 0 // To track the latest update ID
 
   // Register built-in commands
-  commandManager.register("help", helpCommandHandler)
-  commandManager.register("photo", photoCommandHandler)
-  commandManager.register("photo1", photo1CommandHandler)
-  commandManager.register("photo2", photo2CommandHandler)
-  commandManager.register("photo3", photo3CommandHandler)
-  commandManager.register("start", startCommandHandler)
-  commandManager.register("historypush", historypushCommandHandler)
-  commandManager.register("historyback", historybackCommandHandler)
-  commandManager.register("form", formCommandHandler)
-  commandManager.register("formlist", formListCommandHandler)
+  yield* commandManager.register("help", helpCommandHandler)
+  yield* commandManager.register("photo", photoCommandHandler)
+  yield* commandManager.register("photo1", photo1CommandHandler)
+  yield* commandManager.register("photo2", photo2CommandHandler)
+  yield* commandManager.register("photo3", photo3CommandHandler)
+  yield* commandManager.register("start", startCommandHandler)
+  yield* commandManager.register("historypush", historypushCommandHandler)
+  yield* commandManager.register("historyback", historybackCommandHandler)
+  yield* commandManager.register("form", formCommandHandler)
+  yield* commandManager.register("formlist", formListCommandHandler)
 
   // Example form registration
   const registrationForm = createForm(

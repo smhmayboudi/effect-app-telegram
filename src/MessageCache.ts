@@ -1,4 +1,4 @@
-import { Context, Effect, Layer } from "effect"
+import { Context, Effect, Layer, Ref } from "effect"
 import type { Message } from "./TelegramBotApi.js"
 
 export interface MessageCache {
@@ -12,17 +12,17 @@ export class MessageCacheContext extends Context.Tag(
 
 export const MessageCacheLive = Layer.effect(
   MessageCacheContext,
-  Effect.sync(() => {
+  Effect.gen(function*() {
     // Create an in-memory Map to store cached messages
-    const messages: Map<string, Message> = new Map()
+    const messagesRef = yield* Ref.make(new Map<string, Message>())
 
     // Implementation of the MessageCache methods
     return MessageCacheContext.of({
-      get: (key) => Effect.sync(() => messages.get(key)),
-      set: (key, message) =>
-        Effect.sync(() => {
-          messages.set(key, message)
-        })
+      get: (key) =>
+        Ref.get(messagesRef).pipe(
+          Effect.map((messages) => messages.get(key))
+        ),
+      set: (key, message) => Ref.update(messagesRef, (messages) => messages.set(key, message))
     })
   })
 )
