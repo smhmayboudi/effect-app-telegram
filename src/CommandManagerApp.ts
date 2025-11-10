@@ -8,7 +8,7 @@ export const photoCommandHandler: CommandHandler = (
   userId,
   messageText,
   args,
-  { inputFileCache, telegramBotApi }
+  { messageCache, telegramBotApi }
 ) =>
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
@@ -21,39 +21,29 @@ export const photoCommandHandler: CommandHandler = (
       return
     }
     const filename = args[0]
-    // Check if photo exists in cache
-    const hasFile = yield* inputFileCache.has(filename).pipe(
+    // Send photo from cache
+    const cached = yield* messageCache.get(filename).pipe(
       Effect.mapError((error) =>
         new TelegramBotApiError({
           message: `Error processing photo command: ${String(error)}`
         })
       )
     )
-    if (hasFile) {
-      // Send photo from cache
-      const cachedFile = yield* inputFileCache.get(filename).pipe(
-        Effect.mapError((error) =>
-          new TelegramBotApiError({
-            message: `Error processing photo command: ${String(error)}`
-          })
-        )
-      )
-      if (cachedFile) {
-        yield* Effect.logInfo(`Sending cached photo: ${filename}`)
-        yield* telegramBotApi.sendPhoto({
-          caption: `Playing cached photo: ${filename}`,
-          chat_id: chatId,
-          photo: cachedFile.photo?.sort((a, b) => b.width - a.width)[0].file_id ?? ""
-        })
-        return
-      }
+    if (cached) {
+      yield* Effect.logInfo(`Sending cached photo: ${filename}`)
+      yield* telegramBotApi.sendPhoto({
+        caption: `Playing cached photo: ${filename}`,
+        chat_id: chatId,
+        photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
+      })
+    } else {
+      // If not in cache, send a message that the photo is not available
+      yield* Effect.logInfo(`photo not found in cache: ${filename}`)
+      yield* telegramBotApi.sendMessage({
+        chat_id: chatId,
+        text: `photo file "${filename}" not found in cache.`
+      })
     }
-    // If not in cache, send a message that the photo is not available
-    yield* Effect.logInfo(`photo not found in cache: ${filename}`)
-    yield* telegramBotApi.sendMessage({
-      chat_id: chatId,
-      text: `photo file "${filename}" not found in cache.`
-    })
   })
 
 // Help command handler effect
@@ -120,7 +110,7 @@ export const photo2CommandHandler: CommandHandler = (
   userId,
   messageText,
   args,
-  { inputFileCache, telegramBotApi }
+  { messageCache: messageCache, telegramBotApi }
 ) =>
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
@@ -130,7 +120,7 @@ export const photo2CommandHandler: CommandHandler = (
       photo: "AgACAgQAAxkDAANeaQ9EyYY_8iIgQ-3RvHW3uu_NsLoAAq8LaxvPVH1QQEg0_LbVf5EBAAMCAAN4AAM2BA"
     })
     yield* Effect.logInfo(message)
-    yield* inputFileCache.save("293906.jpeg", message)
+    yield* messageCache.set("293906.jpeg", message)
   })
 
 async function fetchphotoAsBuffer(url: string) {

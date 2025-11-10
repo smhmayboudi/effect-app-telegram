@@ -9,7 +9,7 @@ import {
   photoCommandHandler,
   startCommandHandler
 } from "./CommandManagerApp.js"
-import { InputFileCacheLive } from "./MessageCache.js"
+import { MessageCacheLive } from "./MessageCache.js"
 import {
   TelegramBotApiConfigContext,
   TelegramBotApiConfigLive,
@@ -79,7 +79,7 @@ const handleUpdates = Effect.gen(function*() {
 pipe(
   handleUpdates,
   Effect.provide(CommandManagerLive),
-  Effect.provide(InputFileCacheLive),
+  Effect.provide(MessageCacheLive),
   Effect.provide(TelegramBotApiLive),
   Effect.provide(TelegramBotApiConfigLive),
   Effect.catchAll((error) => {
