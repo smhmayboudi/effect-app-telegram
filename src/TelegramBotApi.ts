@@ -8461,13 +8461,13 @@ export const TelegramBotApiConfigLive = Layer.effect(
       Config.validate({ message: "Must not be empty", validation: (a) => "" !== Redacted.value(a) })
     )
 
-    return {
+    return TelegramBotApiConfigContext.of({
       apiBaseUrl,
       rateLimitDelay,
       retryAttempts,
       retryDelay,
       timeout,
       token
-    }
+    })
   })
 )
