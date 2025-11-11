@@ -1,10 +1,14 @@
-import { Context, Effect, HashMap, Layer, Option, Ref } from "effect"
+import { Context, Data, Effect, HashMap, Layer, Option, Ref } from "effect"
 import type { TelegramBotApi } from "./TelegramBotApi.js"
 import { TelegramBotApiError } from "./TelegramBotApi.js"
 
 // =============================================================================
 // Form Types
 // =============================================================================
+
+export class FormManagerNoActiveFormError extends Data.TaggedError(
+  "FormManagerNoActiveFormError"
+) {}
 
 export interface FormStep {
   /** The key to store the user's response under in the results */
@@ -101,7 +105,11 @@ export interface FormManager {
    * @param input The user's input
    * @param telegramBotApi The API instance to send messages back to the user
    */
-  processInput(chatId: number, input: string, telegramBotApi: TelegramBotApi): Effect.Effect<void, TelegramBotApiError>
+  processInput(
+    chatId: number,
+    input: string,
+    telegramBotApi: TelegramBotApi
+  ): Effect.Effect<void, FormManagerNoActiveFormError | TelegramBotApiError>
   /**
    * Register a new form definition
    * @param formDefinition The form to register
@@ -131,7 +139,7 @@ export const FormManagerLive = Layer.effect(
           const maybeFormState = yield* formCache.get(chatId)
           if (Option.isNone(maybeFormState)) {
             // No active form for this chat, ignore the input
-            yield* Effect.void
+            yield* Effect.fail(new FormManagerNoActiveFormError())
             return
           }
           const formState = maybeFormState.value

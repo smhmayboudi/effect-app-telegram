@@ -1,4 +1,4 @@
-import { Duration, Effect, pipe, Schedule } from "effect"
+import { Duration, Effect, Either, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import {
@@ -86,15 +86,21 @@ const handleUpdates = Effect.gen(function*() {
             yield* commandManager.handle(messageText, chatId, userId)
           } else {
             // Check if user is filling out a form
-            yield* formManager.processInput(chatId, messageText, telegramBotApi)
-            // Send "hi" back to the user for non-command messages
-            const text = "hi"
-            yield* telegramBotApi.sendMessage({
-              chat_id: chatId,
-              reply_parameters: { message_id: update.message.message_id },
-              text
-            })
-            yield* Effect.logInfo(`Replied to user ${userId} with "${text}"`)
+            const a = yield* formManager.processInput(chatId, messageText, telegramBotApi).pipe(
+              Effect.either
+            )
+            if (Either.isLeft(a)) {
+              if (a.left._tag === "FormManagerNoActiveFormError") {
+                // Send "hi" back to the user for non-command messages
+                const text = "hi"
+                yield* telegramBotApi.sendMessage({
+                  chat_id: chatId,
+                  reply_parameters: { message_id: update.message.message_id },
+                  text
+                })
+                yield* Effect.logInfo(`Replied to user ${userId} with "${text}"`)
+              }
+            }
           }
         }
         // Update offset to the latest processed update ID
