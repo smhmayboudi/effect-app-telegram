@@ -47,7 +47,7 @@ export const CommandManagerLive = Layer.effect(
       handle: (messageText, chatId, userId) =>
         Effect.gen(function*() {
           if (!messageText.startsWith("/")) {
-            return Effect.void
+            return yield* Effect.void
           }
           // Extract command and arguments
           const parts = messageText.trim().split(/\s+/)
@@ -56,11 +56,10 @@ export const CommandManagerLive = Layer.effect(
           const commands = yield* Ref.get(commandsRef)
           const handler = commands.get(command)
           if (!handler) {
-            yield* telegramBotApi.sendMessage({
+            return yield* telegramBotApi.sendMessage({
               chat_id: chatId,
               text: `Unknown command: /${command}. Use /help to see available commands.`
             })
-            return
           }
           // Command not found, send a default response
           yield* handler(

@@ -13,22 +13,20 @@ export const photoCommandHandler: CommandHandler = (
     yield* Effect.logInfo(chatId, userId, messageText, args)
     // Extract filename from command arguments
     if (args.length < 1) {
-      yield* telegramBotApi.sendMessage({
+      return yield* telegramBotApi.sendMessage({
         chat_id: chatId,
         text: "Please provide an photo filename. Usage: /photo <filename>"
       })
-      return
     }
     const filename = args[0]
     const cached = yield* messageCache.get(filename)
     // If not in cache, send a message that the photo is not available
     if (!cached) {
       yield* Effect.logInfo(`photo not found in cache: ${filename}`)
-      yield* telegramBotApi.sendMessage({
+      return yield* telegramBotApi.sendMessage({
         chat_id: chatId,
         text: `photo file "${filename}" not found in cache.`
       })
-      return
     }
     // Send photo from cache
     yield* Effect.logInfo(`Sending cached photo: ${filename}`)
@@ -194,11 +192,10 @@ export const formCommandHandler: CommandHandler = (
   Effect.gen(function*() {
     yield* Effect.logInfo(chatId, userId, messageText, args)
     if (args.length < 1) {
-      yield* telegramBotApi.sendMessage({
+      return yield* telegramBotApi.sendMessage({
         chat_id: chatId,
         text: "Please provide a form name. Usage: /form <formName>"
       })
-      return
     }
     const formName = args[0]
     // Try to start the form

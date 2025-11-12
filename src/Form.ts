@@ -139,19 +139,17 @@ export const FormManagerLive = Layer.effect(
           const maybeFormState = yield* formCache.get(chatId)
           if (Option.isNone(maybeFormState)) {
             // No active form for this chat, ignore the input
-            yield* Effect.fail(new FormManagerNoActiveFormError())
-            return
+            return yield* Effect.fail(new FormManagerNoActiveFormError())
           }
           const formState = maybeFormState.value
           const formsMap = yield* Ref.get(formsRef)
           const formDef = formsMap.get(formState.formName)
           if (!formDef) {
-            yield* Effect.fail(
+            return yield* Effect.fail(
               new TelegramBotApiError({
                 message: `Form "${formState.formName}" not found`
               })
             )
-            return
           }
           // Store the user's input for the current step
           const currentStep = formDef.steps[formState.currentStep]
@@ -163,8 +161,7 @@ export const FormManagerLive = Layer.effect(
           if (nextStepIndex >= formDef.steps.length) {
             // Form is complete
             yield* formDef.onComplete(chatId, updatedResults, telegramBotApi)
-            yield* formCache.delete(chatId)
-            return
+            return yield* formCache.delete(chatId)
           }
           // Move to the next step
           const nextStep = formDef.steps[nextStepIndex]
@@ -187,12 +184,11 @@ export const FormManagerLive = Layer.effect(
           const formsMap = yield* Ref.get(formsRef)
           const formDef = formsMap.get(formName)
           if (!formDef || formDef.steps.length === 0) {
-            yield* Effect.fail(
+            return yield* Effect.fail(
               new TelegramBotApiError({
                 message: `Form "${formName}" not found or has no steps`
               })
             )
-            return
           }
           const initiaStepIndex = 0
           const initiaStep = formDef.steps[initiaStepIndex]
