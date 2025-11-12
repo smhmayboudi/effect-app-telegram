@@ -1,4 +1,4 @@
-import { Duration, Effect, Either, pipe, Schedule } from "effect"
+import { Duration, Effect, pipe, Schedule } from "effect"
 
 import { CommandManagerContext, CommandManagerLive } from "./CommandManager.js"
 import {
@@ -76,31 +76,22 @@ const handleUpdates = Effect.gen(function*() {
         yield* Effect.logInfo("Processing update:", update)
         // Check if the update contains a message
         if (update.message && update.message.from && update.message.text) {
-          const chatId = update.message.chat.id
-          const userId = update.message.from.id
-          const messageText = update.message.text
-          yield* Effect.logInfo(`Received message from user ${userId}: ${messageText}`)
-
+          yield* Effect.logInfo(`Received message from user ${update.message.from.id}: ${update.message.text}`)
           // Check if the message is a command
-          if (messageText.startsWith("/")) {
-            yield* commandManager.handle(messageText, chatId, userId)
+          if (update.message.text.startsWith("/")) {
+            yield* commandManager.handle(update.message.text, update.message.chat.id, update.message.from.id)
           } else {
+            const text = "hi"
             // Check if user is filling out a form
-            const a = yield* formManager.processInput(chatId, messageText, telegramBotApi).pipe(
-              Effect.either
-            )
-            if (Either.isLeft(a)) {
-              if (a.left._tag === "FormManagerNoActiveFormError") {
-                // Send "hi" back to the user for non-command messages
-                const text = "hi"
-                yield* telegramBotApi.sendMessage({
-                  chat_id: chatId,
-                  reply_parameters: { message_id: update.message.message_id },
+            yield* formManager.processInput(update.message.chat.id, update.message.text, telegramBotApi).pipe(
+              Effect.catchTag("FormManagerNoActiveFormError", () =>
+                telegramBotApi.sendMessage({
+                  chat_id: update.message?.chat.id || 0,
+                  reply_parameters: { message_id: update.message?.message_id || 0 },
                   text
-                })
-                yield* Effect.logInfo(`Replied to user ${userId} with "${text}"`)
-              }
-            }
+                }))
+            )
+            yield* Effect.logInfo(`Replied to user ${update.message.from.id} with "${text}"`)
           }
         }
         // Update offset to the latest processed update ID
