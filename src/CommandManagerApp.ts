@@ -20,22 +20,22 @@ export const photoCommandHandler: CommandHandler = (
       return
     }
     const filename = args[0]
-    // Send photo from cache
     const cached = yield* messageCache.get(filename)
-    if (cached) {
-      yield* Effect.logInfo(`Sending cached photo: ${filename}`)
-      yield* telegramBotApi.sendPhoto({
-        caption: `Playing cached photo: ${filename}`,
+    // If not in cache, send a message that the photo is not available
+    if (!cached) {
+      yield* Effect.logInfo(`photo not found in cache: ${filename}`)
+      yield* telegramBotApi.sendMessage({
         chat_id: chatId,
-        photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
+        text: `photo file "${filename}" not found in cache.`
       })
       return
     }
-    // If not in cache, send a message that the photo is not available
-    yield* Effect.logInfo(`photo not found in cache: ${filename}`)
-    yield* telegramBotApi.sendMessage({
+    // Send photo from cache
+    yield* Effect.logInfo(`Sending cached photo: ${filename}`)
+    yield* telegramBotApi.sendPhoto({
+      caption: `Playing cached photo: ${filename}`,
       chat_id: chatId,
-      text: `photo file "${filename}" not found in cache.`
+      photo: cached.photo?.sort((a, b) => b.width - a.width)[0].file_id || ""
     })
   })
 

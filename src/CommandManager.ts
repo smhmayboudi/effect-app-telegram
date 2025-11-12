@@ -55,21 +55,21 @@ export const CommandManagerLive = Layer.effect(
           const args = parts.slice(1) // Remaining parts are arguments
           const commands = yield* Ref.get(commandsRef)
           const handler = commands.get(command)
-          if (handler) {
-            yield* handler(
-              chatId,
-              userId,
-              messageText,
-              args,
-              { formManager, historyCache, messageCache, telegramBotApi }
-            )
+          if (!handler) {
+            yield* telegramBotApi.sendMessage({
+              chat_id: chatId,
+              text: `Unknown command: /${command}. Use /help to see available commands.`
+            })
             return
           }
           // Command not found, send a default response
-          yield* telegramBotApi.sendMessage({
-            chat_id: chatId,
-            text: `Unknown command: /${command}. Use /help to see available commands.`
-          })
+          yield* handler(
+            chatId,
+            userId,
+            messageText,
+            args,
+            { formManager, historyCache, messageCache, telegramBotApi }
+          )
         }),
       register: (command, handler) =>
         Ref.update(commandsRef, (commands) => commands.set(command.toLowerCase(), handler))
